@@ -74,11 +74,16 @@ class Tokenizer:
     # ----------------------------------------------------------------------------
     # ENCODING/DECODING
     # ----------------------------------------------------------------------------
-    def encode_file(self, path, flat=True):
+    def encode(self, str, flat=True):
         """
         Flat list of ids from word for FFN and RNN, one per paragraph for
         n-gram model
         """
+        lines = [[self.stoi.get(w, self.unk_id) for w in str.strip().split()]]
+
+        return [i for line in lines for i in line] if flat else lines
+
+    def encode_file(self, path, flat=True):
         lines = [
             [self.stoi.get(w, self.unk_id) for w in line]
             for line in self._read_lines(path)
