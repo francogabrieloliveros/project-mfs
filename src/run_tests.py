@@ -25,13 +25,12 @@ def run_tests(vocab, ngram, feed_forward, rnn):
 
     # RNN
     (next_id, _), _ = rnn.predict_next(
-        prompt_ids_flat, temperature=0.75, top_k=20, blocked_ids=[vocab.unk_id]
+        prompt_ids_flat, temperature=0.8, blocked_ids=[vocab.unk_id]
     )
     generated_ids = rnn.generate(
         prompt_ids_flat,
         max_tokens=50,
-        temperature=0.75,
-        top_k=20,
+        temperature=0.8,
         blocked_ids=[vocab.unk_id],
     )
     print("\n__________RNN Prediction__________")
