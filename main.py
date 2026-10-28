@@ -1,3 +1,4 @@
+from classes.NGramModel import NGramModel
 from classes.RecurrentNeuralNetwork import RecurrentNeuralNetwork
 from src.load_dataset import load_dataset
 from src.run_tests import run_tests
@@ -8,7 +9,7 @@ def main():
     vocab, train, test, validation = load_dataset()
 
     # TODO: Add Other models
-    ngram = None
+    ngram = NGramModel(vocab, train, n=3)
     feed_forward = None
     rnn = RecurrentNeuralNetwork(train, len(vocab))
 

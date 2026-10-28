@@ -5,6 +5,24 @@ def run_tests(vocab, ngram, feed_forward, rnn):
     prompt_ids = vocab.encode(prompt, flat=False)
     print("Prompt: ", prompt)
 
+    # N-gram
+    (next_id, _), _ = ngram.predict_next(
+        prompt_ids_flat, temperature=0.75, top_k=20, blocked_ids=[vocab.unk_id]
+    )
+    generated_ids = ngram.generate(
+        prompt_ids_flat,
+        max_tokens=50,
+        temperature=0.75,
+        top_k=20,
+        blocked_ids=[vocab.unk_id],
+    )
+    print("\n__________N-gram Prediction__________")
+    if next_id is None:
+        print("{No usable prediction (context unseen, or only followed by blocked words)}")
+    else:
+        print("Next Word:", vocab.decode([next_id]))
+        print("Next Phrase: ", vocab.decode(generated_ids))
+
     # RNN
     (next_id, _), _ = rnn.predict_next(
         prompt_ids_flat, temperature=0.75, top_k=20, blocked_ids=[vocab.unk_id]
