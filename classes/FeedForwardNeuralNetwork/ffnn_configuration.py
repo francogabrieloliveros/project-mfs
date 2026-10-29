@@ -1,9 +1,10 @@
 class FFNNConfiguration:
     CURRENT_CONFIGURATION = {
-        "window_size": 3,
+        "window_size": 5,
         "embedding_dimension": 16,
         "hidden_layer_dimension": 32,
         "learning_rate": 0.1,
+        "eos_id": 1,
     }
 
     def __init__(self, vocabulary_size, configuration=None):
@@ -15,3 +16,4 @@ class FFNNConfiguration:
         self.embedding_dimension = configuration["embedding_dimension"]
         self.hidden_layer_dimension = configuration["hidden_layer_dimension"]
         self.learning_rate = configuration["learning_rate"]
+        self.eos_id = configuration.get("eos_id", 1)

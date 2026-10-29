@@ -1,15 +1,15 @@
-# to do:
-# ffnn configuration DONE
-# training example DONE
-# word embedding DONE
-# hidden-layer weight and bias DONE
-# output-layer weight and bias DONE
-# combining embeddings into an input vector DONE
-# hidden-neuron calculations DONE
-# output scores and next-word prediction DONE
-# training and weight updates etc etc
-# ----------------------------------------------------------
-import json
+"""
+    Helpful references:
+    
+    }}} DATA BATCHING https://apxml.com/courses/introduction-to-neural-networks/chapter-2-data-preparation-neural-networks/data-batching
+    
+    - builds training examples by pairing each context window with the next token
+    - initializes the FFNN's embeddings, weights, and biases
+    - predicts the next token, generates sequences, and trains the model
+    - saves and loads model parameters and configuration in NPZ files
+
+"""
+
 from pathlib import Path
 
 import numpy as np
@@ -41,56 +41,66 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         
         self.ids = ids
         self.configuration = configuration
-        self.embeddings = []
         self.random_state = 42
-        
-        for word_id in range(self.configuration.vocabulary_size):
-            embedding = []
+        self.sampling_rng = np.random.default_rng()
 
-            for number in range(self.configuration.embedding_dimension):
-                embedding.append(self._random_value(-0.1, 0.1))
+        self.embeddings = np.empty(
+            (
+                self.configuration.vocabulary_size,
+                self.configuration.embedding_dimension,
+            ),
+            dtype=np.float32,
+        )
+        word_id = 0
+        while word_id < self.configuration.vocabulary_size:
+            dimension = 0
+            while dimension < self.configuration.embedding_dimension:
+                self.embeddings[word_id, dimension] = self._random_value(-0.1, 0.1)
+                dimension += 1
+            word_id += 1
 
-            self.embeddings.append(embedding)
-        
         self.input_dimension = (
             self.configuration.window_size * self.configuration.embedding_dimension
         )
 
-        self.hidden_weights = []
+        self.hidden_weights = np.empty(
+            (self.input_dimension, self.configuration.hidden_layer_dimension),
+            dtype=np.float32,
+        )
+        input_index = 0
+        while input_index < self.input_dimension:
+            neuron_index = 0
+            while neuron_index < self.configuration.hidden_layer_dimension:
+                self.hidden_weights[input_index, neuron_index] = self._random_value(
+                    -0.1, 0.1
+                )
+                neuron_index += 1
+            input_index += 1
 
-        for input_index in range(self.input_dimension):
-            weights = []
+        self.hidden_bias = np.zeros(
+            self.configuration.hidden_layer_dimension, dtype=np.float32
+        )
 
-            for neuron_index in range(self.configuration.hidden_layer_dimension):
-                weights.append(self._random_value(-0.1, 0.1))
+        self.output_weights = np.empty(
+            (
+                self.configuration.hidden_layer_dimension,
+                self.configuration.vocabulary_size,
+            ),
+            dtype=np.float32,
+        )
+        neuron_index = 0
+        while neuron_index < self.configuration.hidden_layer_dimension:
+            word_id = 0
+            while word_id < self.configuration.vocabulary_size:
+                self.output_weights[neuron_index, word_id] = self._random_value(
+                    -0.1, 0.1
+                )
+                word_id += 1
+            neuron_index += 1
 
-            self.hidden_weights.append(weights)
-
-        self.hidden_bias = []
-
-        for neuron_index in range(self.configuration.hidden_layer_dimension):
-            self.hidden_bias.append(0.0)
-        
-        self.output_weights = []
-
-        for neuron_index in range(self.configuration.hidden_layer_dimension):
-            weights = []
-
-            for word_id in range(self.configuration.vocabulary_size):
-                weights.append(self._random_value(-0.1, 0.1))
-
-            self.output_weights.append(weights)
-
-        self.output_bias = []
-
-        for word_id in range(self.configuration.vocabulary_size):
-            self.output_bias.append(0.0)
-
-        self.embeddings = np.asarray(self.embeddings, dtype=np.float32)
-        self.hidden_weights = np.asarray(self.hidden_weights, dtype=np.float32)
-        self.hidden_bias = np.asarray(self.hidden_bias, dtype=np.float32)
-        self.output_weights = np.asarray(self.output_weights, dtype=np.float32)
-        self.output_bias = np.asarray(self.output_bias, dtype=np.float32)
+        self.output_bias = np.zeros(
+            self.configuration.vocabulary_size, dtype=np.float32
+        )
                                 
     def _random_value(self, minimum, maximum):
         self.random_state = (
@@ -115,25 +125,37 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         return result, candidates
 
     
-    def generate(self, context, max_tokens, temperature=0.0, top_k=40, blocked_ids=()):
+    def generate(
+        self,
+        context,
+        max_tokens,
+        temperature=0.0,
+        top_k=40,
+        blocked_ids=(),
+        min_tokens_before_eos=19, # im 19 yr old hehe
+    ):
         if len(context) != self.configuration.window_size:
             raise ValueError("context must match window_size")
-
-        if max_tokens < 0:
-            raise ValueError("max_tokens must be at least 0")
 
         generated_ids = []
         current_context = context.copy()
 
-        for number in range(max_tokens):
+        for i in range(max_tokens):
+            current_blocked_ids = tuple(blocked_ids)
+            if len(generated_ids) < min_tokens_before_eos:
+                current_blocked_ids += (self.configuration.eos_id,)
+
             result, candidates = self.predict_next(
                 current_context,
                 temperature,
                 top_k,
-                blocked_ids
+                current_blocked_ids
             )
 
             next_word_id = result[0]
+
+            if next_word_id == self.configuration.eos_id:
+                break
 
             generated_ids.append(next_word_id)
 
@@ -153,8 +175,6 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
             [gradient for _, gradient in embedding_gradients], dtype=np.float32
         )
         np.add.at(self.embeddings, word_ids, -learning_rate * gradients)
-
-
 
     def _train_example(self, context, target_word_id, learning_rate):
         input_values = self._get_input(context)
@@ -212,43 +232,92 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
         return loss
 
-    def fit(self, epochs=10, learning_rate=None):
+    def _train_batch(self, contexts, targets, learning_rate):
+        batch_size = len(contexts)
+        row_indices = np.arange(batch_size)
+
+        inputs = self.embeddings[contexts].reshape(batch_size, self.input_dimension)
+        hidden_pre_activation = inputs @ self.hidden_weights + self.hidden_bias
+        hidden_values = np.maximum(hidden_pre_activation, np.float32(0.0))
+        output_scores = hidden_values @ self.output_weights + self.output_bias
+
+        output_scores -= np.max(output_scores, axis=1, keepdims=True)
+        probabilities = np.exp(output_scores)
+        probabilities /= np.sum(probabilities, axis=1, keepdims=True)
+
+        target_probabilities = np.maximum(
+            probabilities[row_indices, targets], np.float32(1e-12)
+        )
+        loss = float(-np.mean(np.log(target_probabilities)))
+
+        output_gradients = probabilities
+        output_gradients[row_indices, targets] -= 1.0
+        output_gradients /= batch_size
+
+        output_weight_gradients = hidden_values.T @ output_gradients
+        output_bias_gradients = np.sum(output_gradients, axis=0)
+
+        hidden_gradients = output_gradients @ self.output_weights.T
+        hidden_gradients *= hidden_pre_activation > 0.0
+        hidden_weight_gradients = inputs.T @ hidden_gradients
+        hidden_bias_gradients = np.sum(hidden_gradients, axis=0)
+
+        input_gradients = (hidden_gradients @ self.hidden_weights.T).reshape(
+            batch_size,
+            self.configuration.window_size,
+            self.configuration.embedding_dimension,
+        )
+
+        self.output_weights -= learning_rate * output_weight_gradients
+        self.output_bias -= learning_rate * output_bias_gradients
+        self.hidden_weights -= learning_rate * hidden_weight_gradients
+        self.hidden_bias -= learning_rate * hidden_bias_gradients
+
+        embedding_word_ids = contexts.reshape(-1)
+        embedding_gradients = input_gradients.reshape(
+            -1, self.configuration.embedding_dimension
+        )
+        np.add.at(
+            self.embeddings,
+            embedding_word_ids,
+            -learning_rate * embedding_gradients,
+        )
+
+        return loss
+
+    def fit(self, epochs=10, learning_rate=None, batch_size=32):
         contexts, targets = make_training_examples(
             self.ids,
             self.configuration.window_size
         )
 
-        if learning_rate is None:
-            learning_rate = self.configuration.learning_rate
-
-        if epochs < 1:
-            raise ValueError("epochs must be at least 1")
-
-        if learning_rate <= 0:
-            raise ValueError("learning_rate must be greater than 0")
+        contexts = np.asarray(contexts, dtype=np.int64)
+        targets = np.asarray(targets, dtype=np.int64)
+        progress_interval = max(1, len(contexts) // (batch_size * 100))
 
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}")
             total_loss = 0.0
-            progress_interval = max(1, len(contexts) // 100)
-            
-            print(f"preape {len(contexts)} training examples.", flush=True)
-            for example_index in range(len(contexts)):
-                loss = self._train_example(
-                    contexts[example_index],
-                    targets[example_index],
-                    learning_rate
-                )
-                total_loss += loss
+            print(f"Preparing {len(contexts)} training examples, batching size: {batch_size}.", flush=True)
 
-                completed = example_index + 1
-                if completed % progress_interval == 0 or completed == len(contexts):
+            for batch_start in range(0, len(contexts), batch_size):
+                batch_end = min(batch_start + batch_size, len(contexts))
+                loss = self._train_batch(
+                    contexts[batch_start:batch_end],
+                    targets[batch_start:batch_end],
+                    learning_rate,
+                )
+                total_loss += loss * (batch_end - batch_start)
+
+                completed = batch_end
+                if (
+                    batch_start // batch_size % progress_interval == 0
+                    or completed == len(contexts)
+                ):
                     percentage = completed * 100 // len(contexts)
                     print(
                         f"\r  Training: {completed}/{len(contexts)} "
-                        f"examples ({percentage}%)",
-                        end="\n" if completed == len(contexts) else "",
-                        flush=True
+                        f"examples ({percentage}%)"
                     )
 
             average_loss = total_loss / len(contexts)
@@ -260,62 +329,59 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
     def save(self, file_path):
         file_path = Path(file_path)
-        model_data = {
-            "configuration": {
-                "vocabulary_size": self.configuration.vocabulary_size,
-                "window_size": self.configuration.window_size,
-                "embedding_dimension": self.configuration.embedding_dimension,
-                "hidden_layer_dimension": self.configuration.hidden_layer_dimension,
-                "learning_rate": self.configuration.learning_rate
-            },
-            "embeddings": self.embeddings.tolist(),
-            "hidden_weights": self.hidden_weights.tolist(),
-            "hidden_bias": self.hidden_bias.tolist(),
-            "output_weights": self.output_weights.tolist(),
-            "output_bias": self.output_bias.tolist(),
-            "random_state": self.random_state
-        }
 
-        if file_path.suffix == ".npz":
-            with file_path.open("wb") as file:
-                np.savez(
-                    file,
-                    configuration=np.array(json.dumps(model_data["configuration"])),
-                    embeddings=self.embeddings,
-                    hidden_weights=self.hidden_weights,
-                    hidden_bias=self.hidden_bias,
-                    output_weights=self.output_weights,
-                    output_bias=self.output_bias,
-                    random_state=np.int64(self.random_state)
-                )
-            print("Model saved to", file_path)
-            return
-
-        with open(file_path, "w") as file:
-            json.dump(model_data, file)
+        with file_path.open("wb") as file:
+            np.savez(
+                file,
+                vocabulary_size=np.int64(self.configuration.vocabulary_size),
+                window_size=np.int64(self.configuration.window_size),
+                embedding_dimension=np.int64(self.configuration.embedding_dimension),
+                hidden_layer_dimension=np.int64(self.configuration.hidden_layer_dimension),
+                learning_rate=np.float32(self.configuration.learning_rate),
+                eos_id=np.int64(self.configuration.eos_id),
+                embeddings=self.embeddings,
+                hidden_weights=self.hidden_weights,
+                hidden_bias=self.hidden_bias,
+                output_weights=self.output_weights,
+                output_bias=self.output_bias,
+                random_state=np.int64(self.random_state)
+            )
 
         print("Model saved to", file_path)
 
     @classmethod
     def load(cls, file_path):
         file_path = Path(file_path)
-        if file_path.suffix == ".npz":
-            with np.load(file_path, allow_pickle=False) as archive:
-                model_data = {
-                    "configuration": json.loads(archive["configuration"].item()),
-                    "embeddings": archive["embeddings"],
-                    "hidden_weights": archive["hidden_weights"],
-                    "hidden_bias": archive["hidden_bias"],
-                    "output_weights": archive["output_weights"],
-                    "output_bias": archive["output_bias"],
-                    "random_state": int(archive["random_state"].item())
-                }
-        else:
-            with file_path.open("r") as file:
-                model_data = json.load(file)
 
-        
-        configuration_data = model_data["configuration"]
+        with np.load(file_path, allow_pickle=False) as archive:
+            embeddings = archive["embeddings"]
+            hidden_weights = archive["hidden_weights"]
+            hidden_bias = archive["hidden_bias"]
+            output_weights = archive["output_weights"]
+            output_bias = archive["output_bias"]
+            random_state = int(archive["random_state"].item())
+
+            if "window_size" in archive:
+                configuration_data = {
+                    "vocabulary_size": int(archive["vocabulary_size"].item()),
+                    "window_size": int(archive["window_size"].item()),
+                    "embedding_dimension": int(archive["embedding_dimension"].item()),
+                    "hidden_layer_dimension": int(archive["hidden_layer_dimension"].item()),
+                    "learning_rate": float(archive["learning_rate"].item()),
+                    "eos_id": int(archive["eos_id"].item()),
+                }
+            else:
+                embedding_dimension = embeddings.shape[1]
+                configuration_data = {
+                    "vocabulary_size": embeddings.shape[0],
+                    "window_size": hidden_weights.shape[0] // embedding_dimension,
+                    "embedding_dimension": embedding_dimension,
+                    "hidden_layer_dimension": hidden_weights.shape[1],
+                    "learning_rate": FFNNConfiguration.CURRENT_CONFIGURATION[
+                        "learning_rate"
+                    ],
+                    "eos_id": 1,
+                }
 
         configuration = FFNNConfiguration(
             vocabulary_size=configuration_data["vocabulary_size"],
@@ -323,7 +389,8 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                 "window_size": configuration_data["window_size"],
                 "embedding_dimension": configuration_data["embedding_dimension"],
                 "hidden_layer_dimension": configuration_data["hidden_layer_dimension"],
-                "learning_rate": configuration_data["learning_rate"]
+                "learning_rate": configuration_data["learning_rate"],
+                "eos_id": configuration_data.get("eos_id", 1)
             }
         )
 
@@ -333,11 +400,11 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
             configuration=configuration
         )
 
-        model.embeddings = np.asarray(model_data["embeddings"], dtype=np.float32)
-        model.hidden_weights = np.asarray(model_data["hidden_weights"], dtype=np.float32)
-        model.hidden_bias = np.asarray(model_data["hidden_bias"], dtype=np.float32)
-        model.output_weights = np.asarray(model_data["output_weights"], dtype=np.float32)
-        model.output_bias = np.asarray(model_data["output_bias"], dtype=np.float32)
-        model.random_state = model_data["random_state"]
+        model.embeddings = np.asarray(embeddings, dtype=np.float32)
+        model.hidden_weights = np.asarray(hidden_weights, dtype=np.float32)
+        model.hidden_bias = np.asarray(hidden_bias, dtype=np.float32)
+        model.output_weights = np.asarray(output_weights, dtype=np.float32)
+        model.output_bias = np.asarray(output_bias, dtype=np.float32)
+        model.random_state = random_state
 
         return model
