@@ -6,7 +6,7 @@ class FFNNConfiguration:
         "learning_rate": 0.1,
     }
 
-    def __init__(self, vocabulary_size, configuration = None):
+    def __init__(self, vocabulary_size, configuration=None):
         if configuration is None:
             configuration = self.CURRENT_CONFIGURATION.copy() 
         

@@ -146,32 +146,136 @@ class FeedForwardNeuralNetwork:
 
         return output_scores
 
-
     def _softmax(self, scores):
+        largest_score = max(scores)
         exponentials = []
         total = 0.0
-        
-        # e 
+
+        # e
         for score in scores:
-            exponential = 2.718281828459045 ** score
+            exponential = 2.718281828459045 ** (score - largest_score)
             exponentials.append(exponential)
             total += exponential
 
         probabilities = []
 
         for exponential in exponentials:
-            probability = exponential / total
-            probabilities.append(probability)
+            probabilities.append(exponential / total)
 
         return probabilities
 
+    def _sample(self, scores, temperature=0.0, top_k=40, blocked_ids=()):
+        if temperature < 0 or temperature > 1:
+            raise ValueError("temperature must be between 0 and 1")
 
-    def predict_next(self, context):
+        if top_k < 1:
+            raise ValueError("top_k must be at least 1")
+
+        candidates = []
+
+        for word_id in range(len(scores)):
+            if word_id not in blocked_ids:
+                candidates.append(word_id)
+
+        if len(candidates) == 0:
+            raise ValueError("no candidate available")
+
+        for i in range(len(candidates)):
+            for j in range(i + 1, len(candidates)):
+                if scores[candidates[j]] > scores[candidates[i]]:
+                    temporary = candidates[i]
+                    candidates[i] = candidates[j]
+                    candidates[j] = temporary
+
+        candidates = candidates[:top_k]
+
+        if temperature == 0:
+            chosen_id = candidates[0]
+            candidate_scores = []
+
+            for word_id in candidates:
+                candidate_scores.append(scores[word_id])
+
+            probabilities = self._softmax(candidate_scores)
+            candidate_probabilities = []
+
+            for position in range(len(candidates)):
+                candidate_probabilities.append(
+                    (candidates[position], probabilities[position])
+                )
+
+            return (chosen_id, probabilities[0]), candidate_probabilities
+
+        adjusted_scores = []
+
+        for word_id in candidates:
+            adjusted_scores.append(scores[word_id] / temperature)
+
+        probabilities = self._softmax(adjusted_scores)
+
+        random_value = self._random_value(0.0, 1.0)
+
+        cumulative_probability = 0.0
+        chosen_position = len(candidates) - 1
+
+        for position in range(len(candidates)):
+            cumulative_probability += probabilities[position]
+
+            if random_value < cumulative_probability:
+                chosen_position = position
+                break
+
+        chosen_id = candidates[chosen_position]
+        chosen_probability = probabilities[chosen_position]
+
+        candidate_probabilities = []
+
+        for position in range(len(candidates)):
+            candidate_probabilities.append(
+                (candidates[position], probabilities[position])
+            )
+
+        return (chosen_id, chosen_probability), candidate_probabilities
+
+
+    def predict_next(self, context, temperature=0.0, top_k=40, blocked_ids=()):
         output_scores = self._forward(context)
-        probabilities = self._softmax(output_scores)
-        predicted_word_id = probabilities.index(max(probabilities))
 
-        return predicted_word_id
+        result, candidates = self._sample(
+            output_scores,
+            temperature,
+            top_k,
+            blocked_ids
+        )
+
+        return result, candidates
+
+    def generate(self, context, max_tokens, temperature=0.0, top_k=40, blocked_ids=()):
+        if len(context) != self.configuration.window_size:
+            raise ValueError("context must match window_size")
+
+        if max_tokens < 0:
+            raise ValueError("max_tokens must be at least 0")
+
+        generated_ids = []
+        current_context = context.copy()
+
+        for number in range(max_tokens):
+            output_scores = self._forward(current_context)
+
+            (next_word_id, next_word_probability), candidates = self._sample(
+                output_scores,
+                temperature,
+                top_k,
+                blocked_ids
+            )
+
+            generated_ids.append(next_word_id)
+
+            current_context = current_context[1:]
+            current_context.append(next_word_id)
+
+        return generated_ids
 
 def ffnn():
     ids = [4, 8, 2, 9, 1]
@@ -226,5 +330,31 @@ def ffnn():
     predicted_word_id = model.predict_next([4, 8, 2])
 
     print("predicted next word:", predicted_word_id)
+    
+    output_scores = model._forward([4, 8, 2])
+
+    print(model._sample(output_scores, temperature=0.0, top_k=5))
+    print(model._sample(output_scores, temperature=0.7, top_k=5))
+
+    context = [4, 8, 2]
+
+    generated_ids = model.generate(
+        context,
+        max_tokens=3,
+        temperature=0.0,
+        top_k=5
+    )
+
+    print("original context:", context)
+    print("generated ids:", generated_ids)
+
+    result, candidates = model.predict_next(
+        [4, 8, 2],
+        temperature=0.0,
+        top_k=5
+    )
+
+    print("prediction:", result)
+    print("candidates:", candidates)
 
 ffnn()
