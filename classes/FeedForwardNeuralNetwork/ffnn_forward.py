@@ -1,53 +1,16 @@
+from math import log
+
+import numpy as np
 
 class FFNNForward:
     def _get_input(self, context):
-        input_values = []
-
-        for word_id in context:
-            embedding = self.embeddings[word_id]
-
-            for number in embedding:
-                input_values.append(number)
-
-        return input_values
+        return self.embeddings[context].reshape(-1)
 
     def _calculate_hidden_layer(self, input_values):
-        hidden_values = []
-
-        for neuron_index in range(self.configuration.hidden_layer_dimension):
-            weighted_sum = 0.0
-
-            for input_index in range(self.input_dimension):
-                input_value = input_values[input_index]
-                weight = self.hidden_weights[input_index][neuron_index]
-
-                weighted_sum += input_value * weight
-
-            weighted_sum += self.hidden_bias[neuron_index]
-
-            if weighted_sum < 0:
-                weighted_sum = 0.0
-
-            hidden_values.append(weighted_sum)
-
-        return hidden_values
+        return np.maximum(np.asarray(input_values) @ self.hidden_weights + self.hidden_bias, 0.0)
 
     def _calculate_output_layer(self, hidden_values):
-        output_scores = []
-
-        for word_id in range(self.configuration.vocabulary_size):
-            total = 0.0
-
-            for neuron_index in range(len(hidden_values)):
-                total += (
-                    hidden_values[neuron_index]
-                    * self.output_weights[neuron_index][word_id]
-                )
-
-            total += self.output_bias[word_id]
-            output_scores.append(total)
-
-        return output_scores
+        return np.asarray(hidden_values) @ self.output_weights + self.output_bias
 
     def _forward(self, context):
         input_values = self._get_input(context)
@@ -57,19 +20,51 @@ class FFNNForward:
         return output_scores
 
     def _softmax(self, scores):
-        largest_score = max(scores)
-        exponentials = []
-        total = 0.0
+        scores = np.asarray(scores)
+        exponentials = np.exp(scores - np.max(scores))
+        return exponentials / np.sum(exponentials)
 
-        # e
-        for score in scores:
-            exponential = 2.718281828459045 ** (score - largest_score)
-            exponentials.append(exponential)
-            total += exponential
+    def _calculate_loss(self, probabilities, target_word_id):
+        target_probability = probabilities[target_word_id]
 
-        probabilities = []
+        if target_probability <= 0.0:
+            target_probability = 1e-12
 
-        for exponential in exponentials:
-            probabilities.append(exponential / total)
+        loss = -log(target_probability)
 
-        return probabilities
+        return loss
+
+    def _calculate_output_gradients(self, probabilities, target_word_id):
+        output_gradients = np.asarray(probabilities).copy()
+        output_gradients[target_word_id] -= 1.0
+        return output_gradients
+    
+
+    def _calculate_output_weight_gradients(self, hidden_values, output_gradients):
+        return np.outer(hidden_values, output_gradients)
+
+
+    def _calculate_output_bias_gradients(self, output_gradients):
+        return np.asarray(output_gradients)
+
+    def _calculate_hidden_gradients(self, hidden_values, output_weights, output_gradients):
+        gradients = output_weights @ np.asarray(output_gradients)
+        return gradients * (np.asarray(hidden_values) > 0.0)
+    
+
+    def _calculate_hidden_weight_gradients(self, input_values, hidden_gradients):
+        return np.outer(input_values, hidden_gradients)
+
+
+    def _calculate_hidden_bias_gradients(self, hidden_gradients):
+        return np.asarray(hidden_gradients)
+
+    def _calculate_input_gradients(self, hidden_gradients):
+        return self.hidden_weights @ np.asarray(hidden_gradients)
+    
+
+    def _calculate_embedding_gradients(self, context, input_gradients):
+        gradients = np.asarray(input_gradients).reshape(
+            len(context), self.configuration.embedding_dimension
+        )
+        return list(zip(context, gradients))

@@ -1,3 +1,5 @@
+import numpy as np
+
 class FFNNSampling:
     def _sample(self, scores, temperature=0.0, top_k=40, blocked_ids=()):
         if temperature < 0 or temperature > 1:
@@ -6,23 +8,16 @@ class FFNNSampling:
         if top_k < 1:
             raise ValueError("top_k must be at least 1")
 
-        candidates = []
+        candidate_ids = np.arange(len(scores))
+        if blocked_ids:
+            candidate_ids = candidate_ids[~np.isin(candidate_ids, blocked_ids)]
 
-        for word_id in range(len(scores)):
-            if word_id not in blocked_ids:
-                candidates.append(word_id)
-
-        if len(candidates) == 0:
+        if len(candidate_ids) == 0:
             raise ValueError("no candidate available")
 
-        for i in range(len(candidates)):
-            for j in range(i + 1, len(candidates)):
-                if scores[candidates[j]] > scores[candidates[i]]:
-                    temporary = candidates[i]
-                    candidates[i] = candidates[j]
-                    candidates[j] = temporary
-
-        candidates = candidates[:top_k]
+        scores = np.asarray(scores)
+        order = np.argsort(-scores[candidate_ids], kind="stable")[:top_k]
+        candidates = candidate_ids[order].tolist()
 
         if temperature == 0:
             chosen_id = candidates[0]
