@@ -6,6 +6,25 @@
 import numpy as np
 
 class FFNNSampling:
+
+    # ------------------------------------------------------------------------
+    # SAMPLING VALIDATION
+    # ------------------------------------------------------------------------
+
+    """
+        - Checks if temperature is between 0 and 1
+        - Checks if top_k is at least 1
+        - Removes blocked word IDs from the candidates
+        - Raises an error if no candidate words are available
+
+            ? What is temperature?
+                - just ensure the word is not repetative the highest scorign like common starling (can it stop)
+
+            ? What is top_k?
+                a: it just limits the choices to the best words 
+
+    """
+
     def _sample(self, scores, temperature=0.0, top_k=40, blocked_ids=()):
         if temperature < 0 or temperature > 1:
             raise ValueError("temperature must be between 0 and 1")

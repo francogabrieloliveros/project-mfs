@@ -35,6 +35,17 @@ def make_training_examples(ids, window_size):
     return contexts, targets
 
 class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
+
+    # ----------------------------------------------------------------------------
+    # INITIALIZATION
+    # ----------------------------------------------------------------------------
+
+    """
+        - stores the training data and model configuration
+        - creates the random number generator used for sampling
+        - initializes the embeddings, weights, and biases
+    """
+
     def __init__(self, ids, vocabulary_size, configuration=None):
         if configuration is None:
             configuration = FFNNConfiguration(vocabulary_size=vocabulary_size)        
@@ -101,7 +112,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         self.output_bias = np.zeros(
             self.configuration.vocabulary_size, dtype=np.float32
         )
-                                
+         
     def _random_value(self, minimum, maximum):
         self.random_state = (
             # SIXX SEVENNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
@@ -124,7 +135,17 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
         return result, candidates
 
-    
+
+    # ----------------------------------------------------------------------------
+    # TEXT GENERATION
+    # ----------------------------------------------------------------------------
+
+    """
+        - repeatedly predicts and adds the next word to the generated sequence
+        - updates the context after each new word
+        - stops when the eos token is selected or the token limit is reached
+    """
+
     def generate(
         self,
         context,
@@ -232,6 +253,18 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
         return loss
 
+    # ----------------------------------------------------------------------------
+    # DATA BATCHING (OPTIMIZATION PURPOSES)
+    # ---------------------------------------------------------------------------
+
+    """
+        - Processes several training examples together
+        - Calculates predictions, probabilities, and average loss for the batch
+        - Calculates gradients for the batch
+        - Updates the weights, biases, and embeddings once for the batch
+
+    """
+
     def _train_batch(self, contexts, targets, learning_rate):
         batch_size = len(contexts)
         row_indices = np.arange(batch_size)
@@ -285,6 +318,16 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
         return loss
 
+    # ----------------------------------------------------------------------------
+    # MODEL TRAINING
+    # ----------------------------------------------------------------------------
+
+    """
+        - creates the training examples from the word IDs
+        - trains the model over multiple epochs using batches
+        - displays training progress and average loss for each epoch
+    """
+
     def fit(self, epochs=10, learning_rate=None, batch_size=32):
         contexts, targets = make_training_examples(
             self.ids,
@@ -326,6 +369,15 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                 "Epoch", epoch + 1,
                 "Average loss:", average_loss
             )
+
+    # ----------------------------------------------------------------------------
+    # SAVE AND LOADING
+    # ----------------------------------------------------------------------------
+
+    """
+        - saves and loads the model configuration and learned parameters to an NPZ file
+        - allows the trained model to be loaded later without training from scratch
+    """
 
     def save(self, file_path):
         file_path = Path(file_path)
