@@ -36,6 +36,7 @@ class RecurrentNeuralNetwork:
 
         # Make forget bias (2nd block) 1s
         self.params["gate_bias"][hidden_dim : 2 * hidden_dim] = 1.0
+        self.params = {k: v.astype(np.float32) for k, v in self.params.items()}
 
     # ------------------------------------------------------------------
     # Helpers
@@ -139,7 +140,6 @@ class RecurrentNeuralNetwork:
         self, input_ids, next_ids, caches, all_stm, probabilities
     ):
         """Calculate how much each parameter contributed to the loss (its gradient)."""
-
         batch_size, num_steps = input_ids.shape
         hidden_dim = self.config[2]
 
@@ -153,7 +153,7 @@ class RecurrentNeuralNetwork:
         time_index = np.arange(num_steps)[None, :]
         score_gradients = probabilities
         score_gradients[batch_index, time_index, next_ids] -= 1.0
-        score_gradients /= batch_size * num_steps
+        score_gradients /= batch_size
 
         # reshape(-1, n) flattens (batch, steps, n) into (batch * steps, n)
         # Tranxpose X x dY
@@ -167,8 +167,8 @@ class RecurrentNeuralNetwork:
         # dY x transpose W
         input_gradient = score_gradients @ self.params["output_weights"].T
 
-        next_stm_gradient = np.zeros((batch_size, hidden_dim))
-        next_ltm_gradient = np.zeros((batch_size, hidden_dim))
+        next_stm_gradient = np.zeros((batch_size, hidden_dim), dtype=np.float32)
+        next_ltm_gradient = np.zeros((batch_size, hidden_dim), dtype=np.float32)
         for t in reversed(range(num_steps)):
             (
                 word_vectors,
@@ -226,7 +226,7 @@ class RecurrentNeuralNetwork:
     # ------------------------------------------------------------------
     # Training
     # ------------------------------------------------------------------
-    def fit(self, epochs=3, batch_size=16, seq_len=32, clip=1.0):
+    def fit(self, epochs=15, batch_size=64, seq_len=32, clip=5.0):
         """
         Train with Stochastic Gradient Descent on self.ids and Truncated
         Backpropagation Through Time.
@@ -241,12 +241,17 @@ class RecurrentNeuralNetwork:
         n = (len(data) - 1) // batch_size
         input_ids = data[: n * batch_size].reshape(batch_size, n)
         shifted_ids = data[1 : n * batch_size + 1].reshape(batch_size, n)
+        learning_rate = self.learning_rate
 
         print("RNN training initiated...")
         for epoch in range(epochs):
-            stm = np.zeros((batch_size, self.config[2]))
+            stm = np.zeros((batch_size, self.config[2]), dtype=np.float32)
             ltm = np.zeros_like(stm)
             losses = []
+
+            # Scale down lr on epochs after 3 to avoid noise
+            if epoch > 3:
+                learning_rate *= 0.6
 
             progress = tqdm(range(0, n, seq_len), desc=f"Epoch {epoch + 1}/{epochs}")
             for i in progress:
@@ -265,11 +270,12 @@ class RecurrentNeuralNetwork:
 
                 # Gradient descent
                 for key in self.params:
-                    self.params[key] -= self.learning_rate * scale * gradient[key]
+                    self.params[key] -= learning_rate * scale * gradient[key]
                 losses.append(loss)
                 progress.set_postfix(loss=f"{np.mean(losses[-20:]):.3f}")
 
             print(f"Epoch {epoch + 1}: loss {np.mean(losses):.3f}  ")
+            self.save("training/rnn.npz")
 
     # ------------------------------------------------------------------
     # Prediction
@@ -277,7 +283,7 @@ class RecurrentNeuralNetwork:
     def _read_prompt(self, prompt):
         """Run prompt ids through LSTM and score every word as the next word."""
         # Just start with zeros for first iteration
-        stm = np.zeros((1, self.config[2]))
+        stm = np.zeros((1, self.config[2]), dtype=np.float32)
         ltm = np.zeros_like(stm)
 
         # Place words into memory
@@ -350,6 +356,6 @@ class RecurrentNeuralNetwork:
         data = np.load(path)
 
         for name in self.params:
-            self.params[name] = data[name]
+            self.params[name] = data[name].astype(np.float32)
         self.learning_rate = float(data["learning_rate"])
         self.config = tuple(int(value) for value in data["config"])
