@@ -115,7 +115,6 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
          
     def _random_value(self, minimum, maximum):
         self.random_state = (
-            # SIXX SEVENNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
             67 * self.random_state + 12345
         ) % (2 ** 31)
 
@@ -153,7 +152,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         temperature=0.0,
         top_k=40,
         blocked_ids=(),
-        min_tokens_before_eos=19, # im 19 yr old hehe
+        min_tokens_before_eos=19,
     ):
         if len(context) != self.configuration.window_size:
             raise ValueError("context must match window_size")
