@@ -196,14 +196,14 @@ class NGramModel:
         print(f"Loading weights and saved data from {path}.")
         data = np.load(path)
 
-        # a different vocab would silently scramble the ids
+        # a different vocab would scramble the ids
         if int(data["vocab_size"]) != len(self.vocab):
             raise ValueError("Vocab size does not match the saved model")
 
         self.n = int(data["n"])
         self.alpha = float(data["alpha"])
 
-        # tolist() gives plain ints, so the tuple keys match normal lookups
+        # convert to list to match tuple keys 
         self.ngram_counts = {}
         for key, count in zip(data["ngram_keys"].tolist(), data["ngram_values"].tolist()):
             self.ngram_counts[tuple(key)] = count
@@ -212,7 +212,7 @@ class NGramModel:
         for key, count in zip(data["context_keys"].tolist(), data["context_values"].tolist()):
             self.context_counts[tuple(key)] = count
 
-        # rebuild the lookup (it isn't saved); assign the count, don't add 1
+        # rebuild the lookup then assign the count
         self.context_lookup = {}
         for ngram, count in self.ngram_counts.items():
             context = ngram[:-1]
