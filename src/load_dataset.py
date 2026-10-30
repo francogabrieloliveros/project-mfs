@@ -1,6 +1,5 @@
 from classes.Tokenizer import Tokenizer
 
-
 def load_dataset():
     vocab = Tokenizer("dataset/train.txt")
     train = vocab.encode_file("dataset/train.txt")

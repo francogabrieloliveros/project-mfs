@@ -1,38 +1,66 @@
 def run_tests(vocab, ngram, feed_forward, rnn):
-    # TODO: Add more for other models
-    prompt = "As with its predecessors , Valkyria Chronicles III is a tactical role-playing game where players take control of a military unit and take part in missions against enemy forces . Stories are told through comic"
-    prompt_ids_flat = vocab.encode(prompt)
-    prompt_ids = vocab.encode(prompt, flat=False)
-    print("Prompt: ", prompt)
+    # prompt = "As with its predecessors , Valkyria Chronicles III is a tactical role-playing game where players take control of a military unit and take part in missions against enemy forces . Stories are told through comic"
+    prompt = "My name is Marck John Torres. I like to play games and can I stop saying common starling"
+    prompt_ids = vocab.encode(prompt)
+    blocked_ids = [vocab.unk_id]
+    print("Prompt:", prompt, flush=True)
 
-    # N-gram
-    (next_id, _), _ = ngram.predict_next(
-        prompt_ids_flat, temperature=0.75, top_k=20, blocked_ids=[vocab.unk_id]
-    )
-    generated_ids = ngram.generate(
-        prompt_ids_flat,
-        max_tokens=50,
-        temperature=0.75,
-        top_k=20,
-        blocked_ids=[vocab.unk_id],
-    )
-    print("\n__________N-gram Prediction__________")
-    if next_id is None:
-        print("{No usable prediction (context unseen, or only followed by blocked words)}")
-    else:
-        print("Next Word:", vocab.decode([next_id]))
-        print("Next Phrase: ", vocab.decode(generated_ids))
+    if ngram is not None:
+        (next_id, _), _ = ngram.predict_next(
+            prompt_ids,
+            temperature=0.75,
+            top_k=20,
+            blocked_ids=blocked_ids,
+        )
+        generated_ids = ngram.generate(
+            prompt_ids,
+            max_tokens=50,
+            temperature=0.75,
+            top_k=20,
+            blocked_ids=blocked_ids,
+        )
+        print("\n__________N-gram Prediction__________")
+        if next_id is None:
+            print("No prediction: the prompt context was not seen in training.")
+        else:
+            print("Next word:", vocab.decode([next_id]))
+            print("Next phrase:", vocab.decode(generated_ids))
 
-    # RNN
-    (next_id, _), _ = rnn.predict_next(
-        prompt_ids_flat, temperature=0.8, blocked_ids=[vocab.unk_id]
-    )
-    generated_ids = rnn.generate(
-        prompt_ids_flat,
-        max_tokens=50,
-        temperature=0.8,
-        blocked_ids=[vocab.unk_id],
-    )
-    print("\n__________RNN Prediction__________")
-    print("Next Word:", vocab.decode([next_id]))
-    print("Next Phrase: ", vocab.decode(generated_ids))
+    if feed_forward is not None:
+        context = prompt_ids[-feed_forward.configuration.window_size:]
+        print("\n__________FFNN Prediction__________", flush=True)
+        (next_id, probability), _ = feed_forward.predict_next(
+            context,
+            temperature=0.75,
+            top_k=20,
+            blocked_ids=blocked_ids,
+        )
+        print("Next word:", vocab.decode([next_id]))
+        print("Probability:", probability)
+        print("Generating FFNN phrase...", flush=True)
+        generated_ids = feed_forward.generate(
+            context,
+            max_tokens=50,
+            temperature=0.75,
+            top_k=20,
+            blocked_ids=blocked_ids,
+        )
+        print("Next phrase:", vocab.decode(generated_ids))
+
+    if rnn is not None:
+        print("\n__________RNN Prediction__________", flush=True)
+        (next_id, _), _ = rnn.predict_next(
+            prompt_ids,
+            temperature=0.75,
+            top_k=20,
+            blocked_ids=blocked_ids,
+        )
+        generated_ids = rnn.generate(
+            prompt_ids,
+            max_tokens=50,
+            temperature=0.75,
+            top_k=20,
+            blocked_ids=blocked_ids,
+        )
+        print("Next word:", vocab.decode([next_id]))
+        print("Next phrase:", vocab.decode(generated_ids))

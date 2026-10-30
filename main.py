@@ -1,19 +1,23 @@
 from classes.NGramModel import NGramModel
 from classes.RecurrentNeuralNetwork import RecurrentNeuralNetwork
+from classes.FeedForwardNeuralNetwork.ffnn import FeedForwardNeuralNetwork
+from classes.FeedForwardNeuralNetwork.ffnn_configuration import FFNNConfiguration
+
 from src.load_dataset import load_dataset
 from src.run_tests import run_tests
 from src.train_models import train_models
 
-
 def main():
     vocab, train, test, validation = load_dataset()
 
-    # TODO: Add Other models
     ngram = NGramModel(vocab, train, n=3)
-    feed_forward = None
+
+    ffnn_configuration = FFNNConfiguration(len(vocab))
+    feed_forward = FeedForwardNeuralNetwork(train, len(vocab), configuration=ffnn_configuration)
     rnn = RecurrentNeuralNetwork(train, len(vocab))
 
-    train_models(ngram, feed_forward, rnn)
+    ngram, feed_forward, rnn = train_models(ngram, feed_forward, rnn)
+
     run_tests(vocab, ngram, feed_forward, rnn)
 
 
