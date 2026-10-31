@@ -1,9 +1,9 @@
 def run_tests(vocab, ngram, feed_forward, rnn):
     # prompt = "As with its predecessors , Valkyria Chronicles III is a tactical role-playing game where players take control of a military unit and take part in missions against enemy forces . Stories are told through comic"
-    prompt = " Robert Boulter is an English film , television and theatre actor . He had a guest - starring role on the television series The Bill in 2000 . This was followed by a starring role in the play Herons written by Simon Stephens , which was performed in 2001 at the Royal Court"
+    prompt = "Robert Boulter is an English film , television and theatre actor . He had a guest - starring role on the television series The Bill in 2000 . This was followed by a starring role in the play Herons written by Simon Stephens , which was performed in 2001 at the Royal Court"
     prompt_ids = vocab.encode(prompt)
     blocked_ids = [vocab.unk_id]
-    print("Prompt:", prompt, flush=True)
+    print("\nPrompt:", prompt, flush=True)
 
     if ngram is not None:
         (next_id, _), _ = ngram.predict_next(
