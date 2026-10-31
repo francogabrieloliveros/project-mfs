@@ -342,7 +342,7 @@ class RecurrentNeuralNetwork:
     # ------------------------------------------------------------------
     def save(self, path):
         """Save weights, shape config and learning rate to an .npz file."""
-        print(f"Weights and data saved to {path}.\n")
+        print(f"Weights and data saved to {path}.")
         np.savez(
             path,
             config=np.array(self.config),
@@ -352,7 +352,7 @@ class RecurrentNeuralNetwork:
 
     def load(self, path):
         """Load saved weights into model."""
-        print(f"Loading weights and saved data from {path}.\n")
+        print(f"Loading weights and saved data from {path}.")
         data = np.load(path)
 
         for name in self.params:
