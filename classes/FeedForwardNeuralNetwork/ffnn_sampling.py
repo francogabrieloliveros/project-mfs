@@ -1,27 +1,27 @@
 """
-    - filters blocked tokens and selects from the highest scoring candidates.
-    0 uses temperature to control whether selection is greedy or sampled.
+- filters blocked tokens and selects from the highest scoring candidates.
+0 uses temperature to control whether selection is greedy or sampled.
 """
 
 import numpy as np
 
-class FFNNSampling:
 
+class FFNNSampling:
     # ------------------------------------------------------------------------
     # SAMPLING VALIDATION
     # ------------------------------------------------------------------------
 
     """
-        - Checks if temperature is between 0 and 1
-        - Checks if top_k is at least 1
-        - Removes blocked word IDs from the candidates
-        - Raises an error if no candidate words are available
+    - Checks if temperature is between 0 and 1
+    - Checks if top_k is at least 1
+    - Removes blocked word IDs from the candidates
+    - Raises an error if no candidate words are available
 
-            ? What is temperature?
-                - just ensure the word is not repetative the highest scorign like common starling (can it stop)
+        ? What is temperature?
+            - just ensure the word is not repetative the highest scorign like common starling (can it stop)
 
-            ? What is top_k?
-                a: it just limits the choices to the best words 
+        ? What is top_k?
+            a: it just limits the choices to the best words
 
     """
 
@@ -34,7 +34,9 @@ class FFNNSampling:
 
         candidate_ids = np.arange(len(scores))
         if blocked_ids:
-            candidate_ids = candidate_ids[np.isin(candidate_ids, blocked_ids, invert=True)]
+            candidate_ids = candidate_ids[
+                np.isin(candidate_ids, blocked_ids, invert=True)
+            ]
 
         if len(candidate_ids) == 0:
             raise ValueError("no candidate available")

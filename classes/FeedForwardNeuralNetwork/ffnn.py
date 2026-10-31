@@ -1,12 +1,12 @@
 """
-    Helpful references:
-    
-    }}} DATA BATCHING https://apxml.com/courses/introduction-to-neural-networks/chapter-2-data-preparation-neural-networks/data-batching
-    
-    - builds training examples by pairing each context window with the next token
-    - initializes the FFNN's embeddings, weights, and biases
-    - predicts the next token, generates sequences, and trains the model
-    - saves and loads model parameters and configuration in NPZ files
+Helpful references:
+
+}}} DATA BATCHING https://apxml.com/courses/introduction-to-neural-networks/chapter-2-data-preparation-neural-networks/data-batching
+
+- builds training examples by pairing each context window with the next token
+- initializes the FFNN's embeddings, weights, and biases
+- predicts the next token, generates sequences, and trains the model
+- saves and loads model parameters and configuration in NPZ files
 
 """
 
@@ -15,8 +15,9 @@ from pathlib import Path
 import numpy as np
 
 from .ffnn_configuration import FFNNConfiguration
-from .ffnn_sampling import FFNNSampling
 from .ffnn_forward import FFNNForward
+from .ffnn_sampling import FFNNSampling
+
 
 def make_training_examples(ids, window_size):
     if len(ids) <= window_size:
@@ -26,7 +27,7 @@ def make_training_examples(ids, window_size):
     targets = []
 
     for position in range(window_size, len(ids)):
-        context = ids[position - window_size:position]
+        context = ids[position - window_size : position]
         target = ids[position]
 
         contexts.append(context)
@@ -34,22 +35,22 @@ def make_training_examples(ids, window_size):
 
     return contexts, targets
 
-class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
+class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
     # ----------------------------------------------------------------------------
     # INITIALIZATION
     # ----------------------------------------------------------------------------
 
     """
-        - stores the training data and model configuration
-        - creates the random number generator used for sampling
-        - initializes the embeddings, weights, and biases
+    - stores the training data and model configuration
+    - creates the random number generator used for sampling
+    - initializes the embeddings, weights, and biases
     """
 
     def __init__(self, ids, vocabulary_size, configuration=None):
         if configuration is None:
-            configuration = FFNNConfiguration(vocabulary_size=vocabulary_size)        
-        
+            configuration = FFNNConfiguration(vocabulary_size=vocabulary_size)
+
         self.ids = ids
         self.configuration = configuration
         self.random_state = 42
@@ -112,13 +113,11 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         self.output_bias = np.zeros(
             self.configuration.vocabulary_size, dtype=np.float32
         )
-         
-    def _random_value(self, minimum, maximum):
-        self.random_state = (
-            67 * self.random_state + 12345
-        ) % (2 ** 31)
 
-        fraction = self.random_state / (2 ** 31 - 1)
+    def _random_value(self, minimum, maximum):
+        self.random_state = (67 * self.random_state + 12345) % (2**31)
+
+        fraction = self.random_state / (2**31 - 1)
 
         return minimum + fraction * (maximum - minimum)
 
@@ -126,14 +125,10 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         output_scores = self._forward(context)
 
         result, candidates = self._sample(
-            output_scores,
-            temperature,
-            top_k,
-            blocked_ids
+            output_scores, temperature, top_k, blocked_ids
         )
 
         return result, candidates
-
 
     # ----------------------------------------------------------------------------
     # TEXT GENERATION
@@ -166,10 +161,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                 current_blocked_ids += (self.configuration.eos_id,)
 
             result, candidates = self.predict_next(
-                current_context,
-                temperature,
-                top_k,
-                current_blocked_ids
+                current_context, temperature, top_k, current_blocked_ids
             )
 
             next_word_id = result[0]
@@ -184,7 +176,16 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
         return generated_ids
 
-    def _update_parameters(self, context, output_weight_gradients, output_bias_gradients, hidden_weight_gradients, hidden_bias_gradients, embedding_gradients, learning_rate):
+    def _update_parameters(
+        self,
+        context,
+        output_weight_gradients,
+        output_bias_gradients,
+        hidden_weight_gradients,
+        hidden_bias_gradients,
+        embedding_gradients,
+        learning_rate,
+    ):
         self.output_weights -= learning_rate * output_weight_gradients
         self.output_bias -= learning_rate * output_bias_gradients
         self.hidden_weights -= learning_rate * hidden_weight_gradients
@@ -205,39 +206,29 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         loss = self._calculate_loss(probabilities, target_word_id)
 
         output_gradients = self._calculate_output_gradients(
-            probabilities,
-            target_word_id
+            probabilities, target_word_id
         )
 
         output_weight_gradients = self._calculate_output_weight_gradients(
-            hidden_values,
-            output_gradients
+            hidden_values, output_gradients
         )
 
-        output_bias_gradients = self._calculate_output_bias_gradients(
-            output_gradients
-        )
+        output_bias_gradients = self._calculate_output_bias_gradients(output_gradients)
 
         hidden_gradients = self._calculate_hidden_gradients(
-            hidden_values,
-            self.output_weights,
-            output_gradients
+            hidden_values, self.output_weights, output_gradients
         )
 
         hidden_weight_gradients = self._calculate_hidden_weight_gradients(
-            input_values,
-            hidden_gradients
+            input_values, hidden_gradients
         )
 
-        hidden_bias_gradients = self._calculate_hidden_bias_gradients(
-            hidden_gradients
-        )
+        hidden_bias_gradients = self._calculate_hidden_bias_gradients(hidden_gradients)
 
         input_gradients = self._calculate_input_gradients(hidden_gradients)
 
         embedding_gradients = self._calculate_embedding_gradients(
-            context,
-            input_gradients
+            context, input_gradients
         )
 
         self._update_parameters(
@@ -247,7 +238,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
             hidden_weight_gradients,
             hidden_bias_gradients,
             embedding_gradients,
-            learning_rate
+            learning_rate,
         )
 
         return loss
@@ -329,8 +320,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
     def fit(self, epochs=10, learning_rate=None, batch_size=32):
         contexts, targets = make_training_examples(
-            self.ids,
-            self.configuration.window_size
+            self.ids, self.configuration.window_size
         )
 
         contexts = np.asarray(contexts, dtype=np.int64)
@@ -340,7 +330,10 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}")
             total_loss = 0.0
-            print(f"Preparing {len(contexts)} training examples, batching size: {batch_size}.", flush=True)
+            print(
+                f"Preparing {len(contexts)} training examples, batching size: {batch_size}.",
+                flush=True,
+            )
 
             for batch_start in range(0, len(contexts), batch_size):
                 batch_end = min(batch_start + batch_size, len(contexts))
@@ -364,10 +357,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
             average_loss = total_loss / len(contexts)
 
-            print(
-                "Epoch", epoch + 1,
-                "Average loss:", average_loss
-            )
+            print("Epoch", epoch + 1, "Average loss:", average_loss)
 
     # ----------------------------------------------------------------------------
     # SAVE AND LOADING
@@ -387,7 +377,9 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                 vocabulary_size=np.int64(self.configuration.vocabulary_size),
                 window_size=np.int64(self.configuration.window_size),
                 embedding_dimension=np.int64(self.configuration.embedding_dimension),
-                hidden_layer_dimension=np.int64(self.configuration.hidden_layer_dimension),
+                hidden_layer_dimension=np.int64(
+                    self.configuration.hidden_layer_dimension
+                ),
                 learning_rate=np.float32(self.configuration.learning_rate),
                 eos_id=np.int64(self.configuration.eos_id),
                 embeddings=self.embeddings,
@@ -395,7 +387,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                 hidden_bias=self.hidden_bias,
                 output_weights=self.output_weights,
                 output_bias=self.output_bias,
-                random_state=np.int64(self.random_state)
+                random_state=np.int64(self.random_state),
             )
 
         print("Model saved to", file_path)
@@ -417,7 +409,9 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                     "vocabulary_size": int(archive["vocabulary_size"].item()),
                     "window_size": int(archive["window_size"].item()),
                     "embedding_dimension": int(archive["embedding_dimension"].item()),
-                    "hidden_layer_dimension": int(archive["hidden_layer_dimension"].item()),
+                    "hidden_layer_dimension": int(
+                        archive["hidden_layer_dimension"].item()
+                    ),
                     "learning_rate": float(archive["learning_rate"].item()),
                     "eos_id": int(archive["eos_id"].item()),
                 }
@@ -441,14 +435,14 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                 "embedding_dimension": configuration_data["embedding_dimension"],
                 "hidden_layer_dimension": configuration_data["hidden_layer_dimension"],
                 "learning_rate": configuration_data["learning_rate"],
-                "eos_id": configuration_data.get("eos_id", 1)
-            }
+                "eos_id": configuration_data.get("eos_id", 1),
+            },
         )
 
         model = cls(
             ids=[],
             vocabulary_size=configuration.vocabulary_size,
-            configuration=configuration
+            configuration=configuration,
         )
 
         model.embeddings = np.asarray(embeddings, dtype=np.float32)

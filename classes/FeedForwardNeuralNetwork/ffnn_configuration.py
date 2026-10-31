@@ -9,8 +9,8 @@ class FFNNConfiguration:
 
     def __init__(self, vocabulary_size, configuration=None):
         if configuration is None:
-            configuration = self.CURRENT_CONFIGURATION.copy() 
-        
+            configuration = self.CURRENT_CONFIGURATION.copy()
+
         self.vocabulary_size = vocabulary_size
         self.window_size = configuration["window_size"]
         self.embedding_dimension = configuration["embedding_dimension"]

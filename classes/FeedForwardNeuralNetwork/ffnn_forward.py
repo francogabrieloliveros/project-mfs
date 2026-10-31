@@ -2,8 +2,8 @@ from math import log
 
 import numpy as np
 
-class FFNNForward:
 
+class FFNNForward:
     # ------------------------------------------------------------------------
     # FORWARD PASS
     # ------------------------------------------------------------------------
@@ -19,7 +19,9 @@ class FFNNForward:
 
     def _calculate_hidden_layer(self, input_values):
         # ReLU sets negative to zero
-        return np.maximum(np.asarray(input_values) @ self.hidden_weights + self.hidden_bias, 0.0)
+        return np.maximum(
+            np.asarray(input_values) @ self.hidden_weights + self.hidden_bias, 0.0
+        )
 
     def _calculate_output_layer(self, hidden_values):
         return np.asarray(hidden_values) @ self.output_weights + self.output_bias
@@ -74,7 +76,7 @@ class FFNNForward:
         output_gradients = np.asarray(probabilities).copy()
         output_gradients[target_word_id] -= 1.0
         return output_gradients
-    
+
     def _calculate_output_weight_gradients(self, hidden_values, output_gradients):
         return np.outer(hidden_values, output_gradients)
 
@@ -84,7 +86,9 @@ class FFNNForward:
     # ------------------------------------------------------------------------
     # HIDDEN LAYER GRADIENTS
     # ------------------------------------------------------------------------
-    def _calculate_hidden_gradients(self, hidden_values, output_weights, output_gradients):
+    def _calculate_hidden_gradients(
+        self, hidden_values, output_weights, output_gradients
+    ):
         gradients = output_weights @ np.asarray(output_gradients)
         return gradients * (np.asarray(hidden_values) > 0.0)
 

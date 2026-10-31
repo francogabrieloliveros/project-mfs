@@ -27,7 +27,7 @@ def run_tests(vocab, ngram, feed_forward, rnn):
             print("Next phrase:", vocab.decode(generated_ids))
 
     if feed_forward is not None:
-        context = prompt_ids[-feed_forward.configuration.window_size:]
+        context = prompt_ids[-feed_forward.configuration.window_size :]
         print("\n__________FFNN Prediction__________", flush=True)
         (next_id, probability), _ = feed_forward.predict_next(
             context,

@@ -1,4 +1,5 @@
 import random
+
 import numpy as np
 
 
@@ -48,29 +49,31 @@ class NGramModel:
 
         # count current word and next word's occurence (by id)
         for line in train_lines:
-
             for i in range(len(line) - self.n + 1):
                 # get N-gram sequence
-                ngram_sequence = line[i:i + self.n]
+                ngram_sequence = line[i : i + self.n]
                 # get context sequence
                 context_sequence = ngram_sequence[:-1]
 
                 # fill dictionaries and get occurences
-                self.ngram_counts[tuple(ngram_sequence)] = self.ngram_counts.get(
-                    tuple(ngram_sequence), 0
-                ) + 1
+                self.ngram_counts[tuple(ngram_sequence)] = (
+                    self.ngram_counts.get(tuple(ngram_sequence), 0) + 1
+                )
 
-                self.context_counts[tuple(context_sequence)] = self.context_counts.get(
-                    tuple(context_sequence), 0
-                ) + 1
+                self.context_counts[tuple(context_sequence)] = (
+                    self.context_counts.get(tuple(context_sequence), 0) + 1
+                )
 
                 # fill lookup dictionary for faster processing
                 if tuple(context_sequence) not in self.context_lookup:
                     self.context_lookup[tuple(context_sequence)] = {}
 
-                self.context_lookup[tuple(context_sequence)][ngram_sequence[-1]] = self.context_lookup[tuple(context_sequence)].get(
-                    ngram_sequence[-1], 0
-                ) + 1
+                self.context_lookup[tuple(context_sequence)][ngram_sequence[-1]] = (
+                    self.context_lookup[tuple(context_sequence)].get(
+                        ngram_sequence[-1], 0
+                    )
+                    + 1
+                )
 
     # ----------------------------------------------------------------------------
     # PROBABILITY AND PREDICTION
@@ -82,7 +85,9 @@ class NGramModel:
 
         # get smoothed probability of a word given its context
         num = self.ngram_counts.get(tuple(complete_gram), 0) + self.alpha
-        den = self.context_counts.get(tuple(context), 0) + (self.alpha * len(self.vocab.stoi))
+        den = self.context_counts.get(tuple(context), 0) + (
+            self.alpha * len(self.vocab.stoi)
+        )
 
         p = num / den
         return p
@@ -98,14 +103,13 @@ class NGramModel:
         # generate tuples of (id, probability) from the ids
         candidates = []
         for target in targets:
-
             if blocked_ids and target in blocked_ids:
                 continue
 
             p = self.get_probability(context, target)
             candidates.append((target, p))
 
-        sorted_cands = sorted(candidates, key=lambda x : x[1], reverse=True)
+        sorted_cands = sorted(candidates, key=lambda x: x[1], reverse=True)
         return sorted_cands[:top_k]
 
     def predict_next(self, context, temperature=0.0, top_k=40, blocked_ids=None):
@@ -118,7 +122,7 @@ class NGramModel:
         assert len(context) >= self.n - 1, f"Need at least {self.n - 1} ids"
 
         # get window
-        window = tuple(context[-(self.n - 1):])
+        window = tuple(context[-(self.n - 1) :])
         # get candidates
         candidates = self._candidates(window, top_k, blocked_ids)
 
@@ -135,14 +139,16 @@ class NGramModel:
 
         return chosen, candidates
 
-    def generate(self, context, max_tokens, temperature=0.0, top_k=40, blocked_ids=None):
+    def generate(
+        self, context, max_tokens, temperature=0.0, top_k=40, blocked_ids=None
+    ):
         """Generate up to max_tokens ids; stops early on an unseen context"""
         assert 0 <= temperature <= 1
         assert max_tokens > 0
         assert len(context) >= self.n - 1
 
         # find window
-        window = list(context[-(self.n - 1):])
+        window = list(context[-(self.n - 1) :])
         generated = []
 
         for _ in range(max_tokens):
@@ -162,7 +168,6 @@ class NGramModel:
 
                 # perform weighted selection
                 for word_id, probability in targets:
-
                     weight = probability ** (1 / temperature)
                     candidate_ids.append(word_id)
                     w.append(weight)
@@ -182,9 +187,13 @@ class NGramModel:
         """Save the counts to a .npz file"""
         np.savez_compressed(
             path,
-            ngram_keys=np.array(list(self.ngram_counts.keys()), dtype=np.int32).reshape(-1, self.n),
+            ngram_keys=np.array(list(self.ngram_counts.keys()), dtype=np.int32).reshape(
+                -1, self.n
+            ),
             ngram_values=np.array(list(self.ngram_counts.values()), dtype=np.int64),
-            context_keys=np.array(list(self.context_counts.keys()), dtype=np.int32).reshape(-1, self.n - 1),
+            context_keys=np.array(
+                list(self.context_counts.keys()), dtype=np.int32
+            ).reshape(-1, self.n - 1),
             context_values=np.array(list(self.context_counts.values()), dtype=np.int64),
             n=self.n,
             alpha=self.alpha,
@@ -203,13 +212,17 @@ class NGramModel:
         self.n = int(data["n"])
         self.alpha = float(data["alpha"])
 
-        # convert to list to match tuple keys 
+        # convert to list to match tuple keys
         self.ngram_counts = {}
-        for key, count in zip(data["ngram_keys"].tolist(), data["ngram_values"].tolist()):
+        for key, count in zip(
+            data["ngram_keys"].tolist(), data["ngram_values"].tolist()
+        ):
             self.ngram_counts[tuple(key)] = count
 
         self.context_counts = {}
-        for key, count in zip(data["context_keys"].tolist(), data["context_values"].tolist()):
+        for key, count in zip(
+            data["context_keys"].tolist(), data["context_values"].tolist()
+        ):
             self.context_counts[tuple(key)] = count
 
         # rebuild the lookup then assign the count
