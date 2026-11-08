@@ -1,69 +1,81 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
+  const groupMembers = [
+    "Member 1 — Role",
+    "Member 2 — Role",
+    "Member 3 — Role",
+    "Member 4 — Role",
+  ];
+
+  const sections = [
+    { href: "/dataset", title: "Dataset", desc: "Source, size, features, target & preprocessing" },
+    { href: "/methods", title: "Methods", desc: "N-gram, FFNN, RNN — how they work & implementation" },
+    { href: "/experiments", title: "Experiments", desc: "Data splits, metrics, hyperparameters" },
+    { href: "/results", title: "Results", desc: "Comparison tables & figures across all models" },
+    { href: "/discussion", title: "Discussion", desc: "Analysis, limitations & future improvements" },
+    { href: "/references", title: "References", desc: "Citations, disclosures & links" },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <main className="flex-1 min-h-screen py-32 px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Hero Section */}
+        <section className="text-center mb-20">
+          <h1 className="font-abril text-5xl md:text-7xl mb-6 text-black">
+            Project MFS
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
+            Next Word Prediction with N-gram, Feed Forward Neural Network,
+            and Recursive Neural Network
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {groupMembers.map((member, i) => (
+              <span key={i} className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm border border-gray-200">
+                {member}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* Problem Statement & Motivation */}
+        <section className="mb-20 p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200">
+          <h2 className="font-abril text-3xl mb-4 text-black">Problem Statement & Motivation</h2>
+          <div className="prose max-w-none text-gray-700">
+            <p className="mb-4">
+              <strong>Problem:</strong> Given a sequence of words, predict the most probable next word.
+              This is a fundamental task in natural language processing with applications in
+              autocomplete, text generation, and language modeling.
+            </p>
+            <p className="mb-4">
+              <strong>Motivation:</strong> Comparing classical statistical approaches (N-grams) with
+              modern neural architectures (FFNN, RNN) reveals the trade-offs between simplicity,
+              interpretability, and predictive power. Understanding these trade-offs guides
+              model selection for real-world deployment constraints.
+            </p>
+          </div>
+        </section>
+
+        {/* Navigation Cards */}
+        <section>
+          <h2 className="font-abril text-3xl mb-8 text-center text-black">Explore the Project</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sections.map((section) => (
+              <Link
+                key={section.href}
+                href={section.href}
+                className="group p-6 bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 hover:border-black/50 hover:shadow-xl transition-all duration-300"
+              >
+                <h3 className="font-abril text-2xl mb-3 text-black group-hover:text-gray-800">
+                  {section.title}
+                </h3>
+                <p className="text-gray-600">{section.desc}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
