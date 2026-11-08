@@ -1,6 +1,5 @@
-def run_tests(vocab, ngram, feed_forward, rnn):
-    # prompt = "As with its predecessors , Valkyria Chronicles III is a tactical role-playing game where players take control of a military unit and take part in missions against enemy forces . Stories are told through comic"
-    prompt = "Robert Boulter is an English film , television and theatre actor . He had a guest - starring role on the television series The Bill in 2000 . This was followed by a starring role in the play Herons written by Simon Stephens , which was performed in 2001 at the Royal Court"
+def run_demo(vocab, ngram, feed_forward, rnn):
+    prompt = "Kiss You is a song recorded by English - Irish boy band One Direction for their second studio album , Take Me Home ( 2012 ) . It was released as the record 's second single in Germany and the third overall single on 7 January 2013 . The song"
     prompt_ids = vocab.encode(prompt)
     blocked_ids = [vocab.unk_id]
     print("\nPrompt:", prompt, flush=True)
@@ -29,15 +28,13 @@ def run_tests(vocab, ngram, feed_forward, rnn):
     if feed_forward is not None:
         context = prompt_ids[-feed_forward.configuration.window_size :]
         print("\n__________FFNN Prediction__________", flush=True)
-        (next_id, probability), _ = feed_forward.predict_next(
+        (next_id, _), _ = feed_forward.predict_next(
             context,
             temperature=0.75,
             top_k=20,
             blocked_ids=blocked_ids,
         )
         print("Next word:", vocab.decode([next_id]))
-        print("Probability:", probability)
-        print("Generating FFNN phrase...", flush=True)
         generated_ids = feed_forward.generate(
             context,
             max_tokens=50,
