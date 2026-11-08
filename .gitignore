@@ -1,6 +1,49 @@
+# === Python / Models ===
 .venv/
-*__pycache__/
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.DS_Store
+*.npz
+
+# === Node / Next.js (page/) ===
+# dependencies
+page/node_modules
+page/.pnp
+page/.pnp.*
+page/.yarn/*
+!page/.yarn/patches
+!page/.yarn/plugins
+!page/.yarn/releases
+!page/.yarn/versions
+
+# testing
+page/coverage
+
+# next.js
+page/.next/
+page/out/
+
+# production
+page/build
+
+# misc
+page/.DS_Store
+page/*.pem
+
+# debug
+page/npm-debug.log*
+page/yarn-debug.log*
+page/yarn-error.log*
+page/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+page/.env*
+
+# vercel
+page/.vercel
+
+# typescript
+page/*.tsbuildinfo
+page/next-env.d.ts
