@@ -28,3 +28,11 @@ h5,
 h6 {
     font-family: var(--font-abril), serif;
 }
+
+.roboto {
+    font-family: var(--font-roboto), sans-serif;
+}
+
+.abril {
+    font-family: var(--font-abril), serif;
+}

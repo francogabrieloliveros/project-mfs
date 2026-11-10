@@ -148,6 +148,28 @@ export default function DatasetPage() {
             </div>
           </div>
         </section>
+
+        <section className={sectionClass}>
+          <h2 className="font-abril text-2xl mb-4 text-black">
+            Features & Target
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold roboto mb-2">Input Features</h3>
+              <p className="text-gray-700">
+                The words before the last word in each sequence, encoded with
+                the training vocabulary.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold roboto mb-2">Target Variable</h3>
+              <p className="text-gray-700">
+                The last word of each sequence, a classification over the
+                33,789-word vocabulary.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );
