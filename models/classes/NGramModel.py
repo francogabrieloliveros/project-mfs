@@ -6,9 +6,9 @@ import numpy as np
 class NGramModel:
     """
     USAGE:
-        model = NGramModel(vocab, train, n=3, alpha=0.1)
+        model = NGramModel(vocab, train, n=2, alpha=0.1)
         model.fit()
-        model.save("training/ngram_n3.npz")   # or model.load(path)
+        model.save("training/ngram_n2.npz")   # or model.load(path)
 
         (next_id, prob), candidates = model.predict_next(prompt_ids, top_k=40)
         ids = model.generate(prompt_ids, max_tokens=50, temperature=0.5)
@@ -18,7 +18,7 @@ class NGramModel:
     # ----------------------------------------------------------------------------
     # SETUP
     # ----------------------------------------------------------------------------
-    def __init__(self, vocab, train=None, n=3, alpha=0.1):
+    def __init__(self, vocab, train=None, n=2, alpha=0.1):
         """Store settings and the training ids used by fit()"""
         self.context_counts = {}
         self.ngram_counts = {}
@@ -209,7 +209,8 @@ class NGramModel:
         if int(data["vocab_size"]) != len(self.vocab):
             raise ValueError("Vocab size does not match the saved model")
 
-        self.n = int(data["n"])
+        if int(data["n"]) != self.n:
+            raise ValueError(f"Saved model has n={int(data['n'])}, but this model uses n={self.n}")
         self.alpha = float(data["alpha"])
 
         # convert to list to match tuple keys

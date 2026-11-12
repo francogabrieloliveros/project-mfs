@@ -17,6 +17,7 @@ def run_test(vocab, test, ngram, feed_forward, rnn, top_k=40):
 
     ngram_log = []
     ngram_top = []
+    ngram_seen = []
     ffnn_log = []
     ffnn_top = []
     rnn_log = []
@@ -27,7 +28,18 @@ def run_test(vocab, test, ngram, feed_forward, rnn, top_k=40):
         test_query = query[:-1]
 
         if ngram is not None:
-            pass
+            n_ctx = ngram.n - 1
+            context = tuple(int(i) for i in test_query[-n_ctx:])
+
+            # perplexity: smoothed probability of the true word
+            ngram_log.append(math.log(ngram.get_probability(context, int(correct_next))))
+
+            # top-k accuracy: only words that were actually seen after the context
+            (_, _), cands = ngram.predict_next(
+                context, temperature=0.0, top_k=top_k, blocked_ids=blocked_ids
+            )
+            ngram_top.append(1 if int(correct_next) in dict(cands) else 0)
+            ngram_seen.append(1 if cands else 0)  # coverage
 
         if feed_forward is not None:
             context_size = feed_forward.configuration.window_size
@@ -60,12 +72,19 @@ def run_test(vocab, test, ngram, feed_forward, rnn, top_k=40):
             rnn_log.append(math.log(scores_map[correct_next]))
             rnn_top.append(1 if correct_next in top_map else 0)
 
-    print("\n__________N-Gram Evaluation__________", flush=True)
+    if ngram is not None:
+        print("\n__________N-Gram Evaluation__________", flush=True)
+        print(f"n: {ngram.n}")
+        print(f"Perplexity Score: {get_perplexity(ngram_log)}")
+        print(f"Top-k Accuracy: {get_topk_accuracy(ngram_top)}")
+        print(f"Coverage: {get_topk_accuracy(ngram_seen)}")
 
-    print("\n__________FFNN Evaluation__________", flush=True)
-    print(f"Perplexity Score: {get_perplexity(ffnn_log)}")
-    print(f"Top-k Accuracy: {get_topk_accuracy(ffnn_top)}")
+    if feed_forward is not None:
+        print("\n__________FFNN Evaluation__________", flush=True)
+        print(f"Perplexity Score: {get_perplexity(ffnn_log)}")
+        print(f"Top-k Accuracy: {get_topk_accuracy(ffnn_top)}")
 
-    print("\n__________RNN Evaluation__________", flush=True)
-    print(f"Perplexity Score: {get_perplexity(rnn_log)}")
-    print(f"Top-k Accuracy: {get_topk_accuracy(rnn_top)}")
+    if rnn is not None:
+        print("\n__________RNN Evaluation__________", flush=True)
+        print(f"Perplexity Score: {get_perplexity(rnn_log)}")
+        print(f"Top-k Accuracy: {get_topk_accuracy(rnn_top)}")

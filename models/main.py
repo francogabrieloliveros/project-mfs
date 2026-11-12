@@ -11,7 +11,7 @@ from src.train_models import train_models
 def main():
     vocab, train, test, validation = load_dataset()
 
-    ngram = NGramModel(vocab, train, n=3)
+    ngram = NGramModel(vocab, train, n=2)
 
     ffnn_configuration = FFNNConfiguration(len(vocab))
     feed_forward = FeedForwardNeuralNetwork(
