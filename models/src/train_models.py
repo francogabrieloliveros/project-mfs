@@ -21,7 +21,7 @@ def train_models(ngram, feed_forward, rnn):
             feed_forward = feed_forward.load(ffnn_path)
             print("FFNN loaded from", ffnn_path)
         else:
-            feed_forward.fit(epochs=8, batch_size=32)
+            feed_forward.fit(epochs=8, batch_size=64)
             feed_forward.save(ffnn_path)
             print("FFNN trained and saved to", ffnn_path)
 

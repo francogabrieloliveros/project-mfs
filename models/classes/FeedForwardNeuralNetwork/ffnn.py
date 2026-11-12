@@ -318,7 +318,10 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         - displays training progress and average loss for each epoch
     """
 
-    def fit(self, epochs=10, learning_rate=None, batch_size=32):
+    def fit(self, epochs=10, learning_rate=None, batch_size=64):
+        if learning_rate is None:
+            learning_rate = self.configuration.learning_rate
+
         contexts, targets = make_training_examples(
             self.ids, self.configuration.window_size
         )
