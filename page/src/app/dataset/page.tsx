@@ -6,8 +6,8 @@ const splits = [
 
 const tokenizationRules = [
   "Keep casing",
-  "Keep quotations",
-  "Process in-between word quotations @-@, @,@, @.@",
+  "Keep punctuations",
+  "Process in-between word punctuations @-@, @,@, @.@",
   "Add <eos> after each paragraph as end of sequence",
   'Ignore headers with "=" at beginning and "=" at end',
   "Words occurring less than 3 times will not be added to the vocabulary and are recognized as <unk>",
