@@ -1,329 +1,411 @@
+type ModelKey = "ngram" | "ffnn" | "rnn";
+
+const models: { key: ModelKey; name: string; bar: string; hex: string }[] = [
+  { key: "ngram", name: "N-gram", bar: "bg-gray-800", hex: "#1f2937" },
+  { key: "ffnn", name: "FFNN", bar: "bg-blue-600", hex: "#2563eb" },
+  { key: "rnn", name: "RNN (LSTM)", bar: "bg-purple-600", hex: "#9333ea" },
+];
+
+const metrics: {
+  label: string;
+  better: "lower" | "higher";
+  unit: string;
+  values: Record<ModelKey, number>;
+}[] = [
+  {
+    label: "Perplexity",
+    better: "lower",
+    unit: "",
+    values: { ngram: 4970.86, ffnn: 3102.25, rnn: 1322.79 },
+  },
+  {
+    label: "Top-1 accuracy",
+    better: "higher",
+    unit: "%",
+    values: { ngram: 5.7196, ffnn: 4.797, rnn: 8.1796 },
+  },
+  {
+    label: "Top-5 accuracy",
+    better: "higher",
+    unit: "%",
+    values: { ngram: 12.1771, ffnn: 11.1931, rnn: 17.4662 },
+  },
+  {
+    label: "Top-10 accuracy",
+    better: "higher",
+    unit: "%",
+    values: { ngram: 16.6667, ffnn: 15.1292, rnn: 23.1242 },
+  },
+];
+
+const accuracyMetrics = metrics.filter((m) => m.unit === "%");
+const AXIS_MAX = 25; // % — top of the bar scale
+
+function bestModel(m: (typeof metrics)[number]): ModelKey {
+  const entries = Object.entries(m.values) as [ModelKey, number][];
+  return entries.reduce((a, b) =>
+    (m.better === "lower" ? b[1] < a[1] : b[1] > a[1]) ? b : a,
+  )[0];
+}
+
+const fmt = (v: number, unit: string) => `${v.toFixed(2)}${unit}`;
+
+// Line chart geometry (SVG units)
+const CHART = { w: 600, h: 300, left: 48, right: 24, top: 36, bottom: 44 };
+const KS = [1, 5, 10]; // matches the order of accuracyMetrics
+const GRID = [0, 5, 10, 15, 20, 25];
+const xFor = (k: number) =>
+  CHART.left + ((k - 1) / 9) * (CHART.w - CHART.left - CHART.right);
+const yFor = (v: number) =>
+  CHART.top + (1 - v / AXIS_MAX) * (CHART.h - CHART.top - CHART.bottom);
+
+// Perplexity charts
+const perplexity = metrics[0];
+const PPL_MAX = 5000;
+const PPL_GRID = [0, 1000, 2000, 3000, 4000, 5000];
+const xForModel = (i: number) =>
+  CHART.left + ((i + 0.5) / models.length) * (CHART.w - CHART.left - CHART.right);
+const yForPpl = (v: number) =>
+  CHART.top + (1 - v / PPL_MAX) * (CHART.h - CHART.top - CHART.bottom);
+
+// One sample run of run_demo.py
+const samples: { model: string; next: string; sequence: string }[] = [
+  {
+    model: "N-gram",
+    next: "to",
+    sequence: `" The first of the time , and the series of the city , and the other countries , a major roads and a total syntheses including the end of the first down the first season . He is the end of the game . <eos>`,
+  },
+  {
+    model: "FFNN",
+    next: "was",
+    sequence: `received the music of the species 's work . The common starling is also common starling . The common starling may be considered by the common starling ( Op. 39 ) ( 23 % ) , and the other common starling are to be known as of whom they can`,
+  },
+  {
+    model: "RNN (LSTM)",
+    next: "was",
+    sequence: `was released on October 1 , 2006 . <eos> All of the first half of the series , the show was released in the first week of 2010 . <eos> The album 's third single , " The Wave " is the best single from the album . <eos>`,
+  },
+];
+
 export default function ResultsPage() {
-  // TODO: Replace with actual results from your experiments
-  const results = {
-    ngram: {
-      ppl: 142.3,
-      acc1: 0.284,
-      acc5: 0.491,
-      acc10: 0.587,
-      params: "—",
-      time: 0.8,
-    },
-    ffnn: {
-      ppl: 98.7,
-      acc1: 0.352,
-      acc5: 0.583,
-      acc10: 0.689,
-      params: "2.1M",
-      time: 3.2,
-    },
-    rnn: {
-      ppl: 87.4,
-      acc1: 0.389,
-      acc5: 0.621,
-      acc10: 0.724,
-      params: "4.8M",
-      time: 12.7,
-    },
-  };
-
-  type ModelName = keyof typeof results;
-  type ResultKey = keyof typeof results.ngram;
-
-  // Define metrics with a shared value type to avoid union issues
-  interface MetricRow {
-    key: ResultKey;
-    label: string;
-    format: (val: any) => string;
-    better: "lower" | "higher";
-  }
-
-  const metricRows: MetricRow[] = [
-    {
-      key: "ppl",
-      label: "Perplexity (↓)",
-      format: (val: number) => val.toFixed(1),
-      better: "lower",
-    },
-    {
-      key: "acc1",
-      label: "Top-1 Accuracy (↑)",
-      format: (val: number) => (val * 100).toFixed(1) + "%",
-      better: "higher",
-    },
-    {
-      key: "acc5",
-      label: "Top-5 Accuracy (↑)",
-      format: (val: number) => (val * 100).toFixed(1) + "%",
-      better: "higher",
-    },
-    {
-      key: "acc10",
-      label: "Top-10 Accuracy (↑)",
-      format: (val: number) => (val * 100).toFixed(1) + "%",
-      better: "higher",
-    },
-    {
-      key: "params",
-      label: "Parameters",
-      format: (val: string) => val,
-      better: "lower",
-    },
-    {
-      key: "time",
-      label: "Inference Time (ms, ↓)",
-      format: (val: number) => val.toFixed(1),
-      better: "lower",
-    },
-  ];
-
-  const getBest = (key: ResultKey, better: "lower" | "higher"): ModelName => {
-    const vals = (Object.keys(results) as ModelName[]).map(
-      (k) => [k, results[k][key]] as const,
-    );
-    if (better === "lower")
-      return vals.reduce((a, b) => (a[1] < b[1] ? a : b))[0];
-    return vals.reduce((a, b) => (a[1] > b[1] ? a : b))[0];
-  };
-
   return (
     <main className="flex-1 min-h-screen py-24 px-8">
-      <div className="max-w-4xl mx-auto space-y-16">
+      <div className="max-w-4xl mx-auto space-y-12">
         <header className="text-center">
           <h1 className="font-abril text-5xl md:text-6xl mb-4 text-black">
             Results
           </h1>
           <p className="text-xl text-gray-600">
-            Comparison tables and figures across all models
+            Test-set comparison of all three models
           </p>
         </header>
 
-        {/* Main Results Table */}
-        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8 overflow-x-auto">
-          <h2 className="font-abril text-2xl mb-6 text-black">
-            Quantitative Comparison (Test Set)
-          </h2>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b-2 border-gray-300">
-                <th className="pb-3 font-semibold text-gray-800">Metric</th>
-                <th className="pb-3 font-semibold text-gray-800 text-center">
-                  N-gram
-                </th>
-                <th className="pb-3 font-semibold text-gray-800 text-center">
-                  FFNN
-                </th>
-                <th className="pb-3 font-semibold text-gray-800 text-center">
-                  RNN/LSTM
-                </th>
-                <th className="pb-3 font-semibold text-gray-800 text-center">
-                  Best
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {metricRows.map((row) => {
-                const bestModel = getBest(row.key, row.better);
-                return (
-                  <tr
-                    key={row.key}
-                    className="border-b border-gray-200 hover:bg-gray-50"
-                  >
-                    <td className="py-3 font-medium text-gray-800">
-                      {row.label}
-                    </td>
-                    <td className="py-3 text-center font-mono">
-                      {bestModel === "ngram" ? (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold">
-                          {row.format(results.ngram[row.key])}
-                        </span>
-                      ) : (
-                        row.format(results.ngram[row.key])
-                      )}
-                    </td>
-                    <td className="py-3 text-center font-mono">
-                      {bestModel === "ffnn" ? (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold">
-                          {row.format(results.ffnn[row.key])}
-                        </span>
-                      ) : (
-                        row.format(results.ffnn[row.key])
-                      )}
-                    </td>
-                    <td className="py-3 text-center font-mono">
-                      {bestModel === "rnn" ? (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold">
-                          {row.format(results.rnn[row.key])}
-                        </span>
-                      ) : (
-                        row.format(results.rnn[row.key])
-                      )}
-                    </td>
-                    <td className="py-3 text-center text-green-600 font-semibold">
-                      {bestModel.toUpperCase()}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <p className="text-gray-500 text-sm mt-4 text-center">
-            Green highlight = best performer. Metrics on test set. Replace
-            placeholder values with actual results.
+        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
+          <h2 className="font-abril text-2xl mb-4 text-black">Comparison</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-base text-left">
+              <thead>
+                <tr className="border-b border-gray-300">
+                  <th className="py-2 pr-4 font-semibold text-gray-800">
+                    Metric
+                  </th>
+                  {models.map((m) => (
+                    <th
+                      key={m.key}
+                      className="py-2 pr-4 font-semibold text-gray-800 text-center"
+                    >
+                      {m.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.map((row) => {
+                  const best = bestModel(row);
+                  return (
+                    <tr key={row.label} className="border-b border-gray-100">
+                      <td className="py-3 pr-4 font-semibold text-gray-800">
+                        {row.label} {row.better === "lower" ? "(↓)" : "(↑)"}
+                      </td>
+                      {models.map((m) => (
+                        <td key={m.key} className="py-3 pr-4 text-center font-mono">
+                          {best === m.key ? (
+                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold">
+                              {fmt(row.values[m.key], row.unit)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-600">
+                              {fmt(row.values[m.key], row.unit)}
+                            </span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-gray-600 text-base mt-4">
+            Green marks the best model per metric. All runs use temperature 0;
+            top-k accuracy uses k = 1, 5, and 10. Perplexity is computed from
+            one prediction per test sequence.
           </p>
         </section>
 
-        {/* Perplexity Comparison Chart Placeholder */}
         <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
-          <h2 className="font-abril text-2xl mb-6 text-black">
-            Perplexity Comparison
+          <h2 className="font-abril text-2xl mb-4 text-black">
+            Top-k Accuracy
           </h2>
-          <div className="h-64 bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-500">
-              <svg
-                className="w-16 h-16 mx-auto mb-4 opacity-50"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-              <p className="font-medium">Bar Chart: Perplexity by Model</p>
-              <p className="text-sm">
-                Add Recharts / Chart.js visualization here
-              </p>
-            </div>
+          <div className="flex flex-wrap gap-4 text-base text-gray-700 mb-6">
+            {models.map((m) => (
+              <span key={m.key} className="flex items-center gap-2">
+                <span className={`inline-block w-3 h-3 rounded ${m.bar}`} />
+                {m.name}
+              </span>
+            ))}
           </div>
-        </section>
-
-        {/* Top-K Accuracy Chart Placeholder */}
-        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
-          <h2 className="font-abril text-2xl mb-6 text-black">
-            Top-K Accuracy Comparison
-          </h2>
-          <div className="h-64 bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-500">
-              <svg
-                className="w-16 h-16 mx-auto mb-4 opacity-50"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-              <p className="font-medium">
-                Grouped Bar Chart: Top-1/5/10 Accuracy
-              </p>
-              <p className="text-sm">
-                Add grouped bar chart visualization here
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Qualitative Examples */}
-        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
-          <h2 className="font-abril text-2xl mb-6 text-black">
-            Qualitative Examples
-          </h2>
           <div className="space-y-6">
-            {[
-              {
-                context: "The quick brown fox jumps over the",
-                ngram: "lazy",
-                ffnn: "lazy",
-                rnn: "lazy",
-                target: "lazy",
-              },
-              {
-                context: "Machine learning models require large amounts of",
-                ngram: "data",
-                ffnn: "data",
-                rnn: "training",
-                target: "data",
-              },
-              {
-                context: "In natural language processing, the goal is to",
-                ngram: "understand",
-                ffnn: "process",
-                rnn: "understand",
-                target: "understand",
-              },
-            ].map((ex, i) => (
-              <div key={i} className="bg-gray-50 rounded-2xl p-4 space-y-2">
-                <p className="font-mono text-sm text-gray-700 bg-white p-3 rounded-xl border">
-                  <span className="font-semibold">Context:</span> {ex.context}
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                  <div className="p-2 bg-white rounded-xl border">
-                    <span className="text-gray-500">Target:</span>
-                    <span className="font-mono font-semibold ml-1 text-green-700">
-                      {ex.target}
-                    </span>
-                  </div>
-                  <div className="p-2 bg-white rounded-xl border">
-                    <span className="text-gray-500">N-gram:</span>
-                    <span className="font-mono font-semibold ml-1 {ex.ngram === ex.target ? 'text-green-700' : 'text-red-700'}">
-                      {ex.ngram}
-                    </span>
-                  </div>
-                  <div className="p-2 bg-white rounded-xl border">
-                    <span className="text-gray-500">FFNN:</span>
-                    <span className="font-mono font-semibold ml-1 {ex.ffnn === ex.target ? 'text-green-700' : 'text-red-700'}">
-                      {ex.ffnn}
-                    </span>
-                  </div>
-                  <div className="p-2 bg-white rounded-xl border">
-                    <span className="text-gray-500">RNN:</span>
-                    <span className="font-mono font-semibold ml-1 {ex.rnn === ex.target ? 'text-green-700' : 'text-red-700'}">
-                      {ex.rnn}
-                    </span>
-                  </div>
+            {accuracyMetrics.map((row) => (
+              <div key={row.label}>
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {row.label.replace(" accuracy", "")}
+                </h3>
+                <div className="space-y-1.5">
+                  {models.map((m) => (
+                    <div key={m.key} className="flex items-center gap-3">
+                      <div className="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${m.bar}`}
+                          style={{
+                            width: `${(row.values[m.key] / AXIS_MAX) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="w-20 text-right text-base font-mono text-gray-700">
+                        {fmt(row.values[m.key], "%")}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-gray-500 text-sm mt-4">
-            Replace with actual model predictions from your test set.
-          </p>
         </section>
 
-        {/* Error Analysis Placeholder */}
+        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
+          <h2 className="font-abril text-2xl mb-4 text-black">Perplexity</h2>
+          <p className="text-gray-600 text-base mb-4">Lower is better.</p>
+          <div className="space-y-1.5">
+            {models.map((m) => (
+              <div key={m.key} className="flex items-center gap-3">
+                <span className="w-28 text-base text-gray-700">{m.name}</span>
+                <div className="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${m.bar}`}
+                    style={{
+                      width: `${(perplexity.values[m.key] / PPL_MAX) * 100}%`,
+                    }}
+                  />
+                </div>
+                <span className="w-20 text-right text-base font-mono text-gray-700">
+                  {fmt(perplexity.values[m.key], "")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
           <h2 className="font-abril text-2xl mb-4 text-black">
-            Error Analysis (Placeholder)
+            Accuracy vs. k
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
-              <h3 className="font-semibold text-red-800 mb-3">
-                Common N-gram Errors
-              </h3>
-              <ul className="text-red-700 space-y-1 list-disc list-inside">
-                <li>Unseen n-grams → falls back to lower order</li>
-                <li>Cannot capture long-range dependencies</li>
-                <li>Over-smoothing common sequences</li>
-              </ul>
-            </div>
-            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-              <h3 className="font-semibold text-blue-800 mb-3">
-                Common Neural Errors
-              </h3>
-              <ul className="text-blue-700 space-y-1 list-disc list-inside">
-                <li>Overconfident wrong predictions</li>
-                <li>Repetition loops (RNN)</li>
-                <li>Rare word underprediction</li>
-              </ul>
-            </div>
+          <div className="flex flex-wrap gap-4 text-base text-gray-700 mb-4">
+            {models.map((m) => (
+              <span key={m.key} className="flex items-center gap-2">
+                <span className={`inline-block w-3 h-3 rounded ${m.bar}`} />
+                {m.name}
+              </span>
+            ))}
+          </div>
+          <svg
+            viewBox={`0 0 ${CHART.w} ${CHART.h}`}
+            className="w-full h-auto"
+            role="img"
+            aria-label="Top-k accuracy at k = 1, 5, and 10 for each model"
+          >
+            {GRID.map((g) => (
+              <g key={g}>
+                <line
+                  x1={CHART.left}
+                  x2={CHART.w - CHART.right}
+                  y1={yFor(g)}
+                  y2={yFor(g)}
+                  stroke="#e5e7eb"
+                />
+                <text
+                  x={CHART.left - 8}
+                  y={yFor(g) + 4}
+                  textAnchor="end"
+                  fontSize="14"
+                  fill="#6b7280"
+                >
+                  {g}%
+                </text>
+              </g>
+            ))}
+            {KS.map((k) => (
+              <text
+                key={k}
+                x={xFor(k)}
+                y={CHART.h - CHART.bottom + 24}
+                textAnchor="middle"
+                fontSize="14"
+                fill="#6b7280"
+              >
+                k = {k}
+              </text>
+            ))}
+            {models.map((m) => {
+              const pts = accuracyMetrics.map((row, i) => ({
+                x: xFor(KS[i]),
+                y: yFor(row.values[m.key]),
+              }));
+              return (
+                <g key={m.key}>
+                  <polyline
+                    points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
+                    fill="none"
+                    stroke={m.hex}
+                    strokeWidth="2.5"
+                    strokeLinejoin="round"
+                  />
+                  {pts.map((p, i) => (
+                    <circle key={i} cx={p.x} cy={p.y} r="4.5" fill={m.hex} />
+                  ))}
+                </g>
+              );
+            })}
+          </svg>
+        </section>
+
+        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
+          <h2 className="font-abril text-2xl mb-4 text-black">
+            Perplexity by Model
+          </h2>
+          <svg
+            viewBox={`0 0 ${CHART.w} ${CHART.h}`}
+            className="w-full h-auto"
+            role="img"
+            aria-label="Perplexity for each model"
+          >
+            {PPL_GRID.map((g) => (
+              <g key={g}>
+                <line
+                  x1={CHART.left}
+                  x2={CHART.w - CHART.right}
+                  y1={yForPpl(g)}
+                  y2={yForPpl(g)}
+                  stroke="#e5e7eb"
+                />
+                <text
+                  x={CHART.left - 8}
+                  y={yForPpl(g) + 4}
+                  textAnchor="end"
+                  fontSize="14"
+                  fill="#6b7280"
+                >
+                  {g}
+                </text>
+              </g>
+            ))}
+            {models.map((m, i) => (
+              <text
+                key={m.key}
+                x={xForModel(i)}
+                y={CHART.h - CHART.bottom + 24}
+                textAnchor="middle"
+                fontSize="14"
+                fill="#6b7280"
+              >
+                {m.name}
+              </text>
+            ))}
+            <polyline
+              points={models
+                .map(
+                  (m, i) =>
+                    `${xForModel(i)},${yForPpl(perplexity.values[m.key])}`,
+                )
+                .join(" ")}
+              fill="none"
+              stroke="#9ca3af"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+            />
+            {models.map((m, i) => (
+              <g key={m.key}>
+                <circle
+                  cx={xForModel(i)}
+                  cy={yForPpl(perplexity.values[m.key])}
+                  r="5"
+                  fill={m.hex}
+                />
+                <text
+                  x={xForModel(i)}
+                  y={yForPpl(perplexity.values[m.key]) - 12}
+                  textAnchor="middle"
+                  fontSize="14"
+                  fill="#374151"
+                >
+                  {fmt(perplexity.values[m.key], "")}
+                </text>
+              </g>
+            ))}
+          </svg>
+        </section>
+
+        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
+          <h2 className="font-abril text-2xl mb-4 text-black">
+            Text Generation Demo
+          </h2>
+          <p className="text-gray-600 text-base mb-2">
+            All three models continue the same prompt:
+          </p>
+          <p className="font-mono text-base text-gray-700 bg-gray-50 p-3 rounded-xl border mb-4">
+            Kiss You is a song recorded by English - Irish boy band One
+            Direction for their second studio album , Take Me Home ( 2012 ) . It
+            was released as the record &apos;s second single in Germany and the
+            third overall single on 7 January 2013 . The song
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-base">
+            {[
+              ["Temperature", "0.75"],
+              ["Top-k", "20"],
+              ["Max new tokens", "50"],
+              ["Blocked token", "<unk>"],
+            ].map(([label, value]) => (
+              <div key={label} className="bg-gray-50 p-3 rounded-xl">
+                <strong>{label}:</strong> {value}
+              </div>
+            ))}
+          </div>
+
+          <h3 className="font-semibold text-gray-800 mt-6 mb-3">Sample run</h3>
+          <div className="space-y-3">
+            {samples.map((s) => (
+              <div key={s.model} className="p-4 bg-gray-50 rounded-2xl">
+                <h4 className="font-semibold text-gray-800">{s.model}</h4>
+                <p className="text-base text-gray-700 mt-1">
+                  <span className="text-gray-500">Next word:</span>{" "}
+                  <span className="font-mono font-semibold">{s.next}</span>
+                </p>
+                <p className="text-base text-gray-700 mt-1">
+                  <span className="text-gray-500">Next sequence:</span>{" "}
+                  <span className="font-mono">{s.sequence}</span>
+                </p>
+              </div>
+            ))}
           </div>
         </section>
       </div>
