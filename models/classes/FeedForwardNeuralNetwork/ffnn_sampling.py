@@ -41,7 +41,7 @@ class FFNNSampling:
         if len(candidate_ids) == 0:
             raise ValueError("no candidate available")
 
-        scores = np.asarray(scores)
+        scores = np.asarray(scores, dtype=np.float32)
         order = np.argsort(-scores[candidate_ids], kind="stable")[:top_k]
         candidates = candidate_ids[order].tolist()
 
@@ -65,7 +65,7 @@ class FFNNSampling:
         adjusted_scores = []
 
         for word_id in candidates:
-            adjusted_scores.append(scores[word_id] / temperature)
+            adjusted_scores.append(scores[word_id] / np.float32(temperature))
 
         probabilities = self._softmax(adjusted_scores)
         random_value = self.sampling_rng.random()
