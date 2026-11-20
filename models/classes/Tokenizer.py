@@ -49,7 +49,7 @@ class Tokenizer:
     def _clean(self, line):
         """Parse @-@ style markers, lowercase if requested, split into tokens."""
         for mark in ("-", ",", "."):
-            line = line.replace(f" @{mark}@ ", mark)
+            line = line.replace(f" @{mark}@ ", f" {mark} ")
 
         if self.lowercase:
             line = line.lower()
