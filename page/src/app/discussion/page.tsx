@@ -13,12 +13,14 @@ export default function DiscussionPage() {
             <div>
               <h3 className="font-semibold text-gray-800 mb-2">N-gram: Baseline Simplicity</h3>
               <p>
-                The N-gram model serves as a strong baseline because it directly estimates
-                conditional probabilities from observed counts. With Kneser-Ney smoothing,
-                it handles unseen contexts reasonably well. However, its fundamental
-                limitation is the Markov assumption — it cannot capture dependencies
-                beyond the fixed (n-1) context window. Data sparsity grows exponentially
-                with n, limiting practical order to 3-5.
+                The N-gram model (n = 2, a bigram) estimates the probability of the next
+                word from how often it followed the previous word in training, using
+                add-alpha smoothing so unseen word pairs never receive zero probability.
+                It is simple, fast, and interpretable, but it conditions on only one
+                previous word, so it cannot capture longer dependencies. It also has
+                no backoff: if the previous word never appeared in training, it falls
+                back to a uniform 1/V probability and produces no candidates. These
+                limits contribute to its high perplexity and modest top-k accuracy.
               </p>
             </div>
             <div>
