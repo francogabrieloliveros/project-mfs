@@ -19,7 +19,7 @@ def main():
     )
     rnn = RecurrentNeuralNetwork(train, len(vocab))
 
-    ngram, feed_forward, rnn = train_models(None, feed_forward, None)
+    ngram, feed_forward, rnn = train_models(None, feed_forward, rnn)
 
     run_demo(vocab, ngram, feed_forward, rnn)
     run_test(vocab, test, ngram, feed_forward, rnn)
