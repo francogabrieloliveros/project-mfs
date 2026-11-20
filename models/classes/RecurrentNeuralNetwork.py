@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 class RecurrentNeuralNetwork:
     def __init__(
-        self, ids, vocab_size, embed_dim=64, hidden_dim=128, learning_rate=1.0
+        self, ids, vocab_size, embed_dim=64, hidden_dim=128, learning_rate=20.0
     ):
         """
         Initialize values randomly from seed 0.
@@ -44,7 +44,7 @@ class RecurrentNeuralNetwork:
     @staticmethod
     def _sigmoid(z):
         """
-        Activation function 1/(1 + e^z) to convert value to number between 0 and 1.
+        Activation function 1/(1 + e^-z) to convert value to number between 0 and 1.
         """
         return 1 / (1 + np.exp(-z))
 
@@ -153,7 +153,7 @@ class RecurrentNeuralNetwork:
         time_index = np.arange(num_steps)[None, :]
         score_gradients = probabilities
         score_gradients[batch_index, time_index, next_ids] -= 1.0
-        score_gradients /= batch_size
+        score_gradients /= batch_size * num_steps
 
         # reshape(-1, n) flattens (batch, steps, n) into (batch * steps, n)
         # Tranxpose X x dY
@@ -226,7 +226,24 @@ class RecurrentNeuralNetwork:
     # ------------------------------------------------------------------
     # Training
     # ------------------------------------------------------------------
-    def fit(self, epochs=15, batch_size=64, seq_len=32, clip=5.0):
+    def evaluate(self, ids, batch_size=64, seq_len=32):
+        data = np.asarray(ids)
+        n = (len(data) - 1) // batch_size
+        x = data[: n * batch_size].reshape(batch_size, n)
+        y = data[1 : n * batch_size + 1].reshape(batch_size, n)
+        stm = np.zeros((batch_size, self.config[2]), dtype=np.float32)
+        ltm = np.zeros_like(stm)
+        total, count = 0.0, 0
+        for i in range(0, n, seq_len):
+            loss, stm, ltm, *_ = self._forward_propagation(
+                x[:, i : i + seq_len], y[:, i : i + seq_len], stm, ltm
+            )
+            k = x[:, i : i + seq_len].size
+            total += loss * k
+            count += k
+        return np.exp(total / count)
+
+    def fit(self, validation_ids, epochs=13, batch_size=64, seq_len=32, clip=0.25):
         """
         Train with Stochastic Gradient Descent on self.ids and Truncated
         Backpropagation Through Time.
@@ -242,16 +259,13 @@ class RecurrentNeuralNetwork:
         input_ids = data[: n * batch_size].reshape(batch_size, n)
         shifted_ids = data[1 : n * batch_size + 1].reshape(batch_size, n)
         learning_rate = self.learning_rate
+        best_val = np.inf
 
         print("RNN training initiated...")
         for epoch in range(epochs):
             stm = np.zeros((batch_size, self.config[2]), dtype=np.float32)
             ltm = np.zeros_like(stm)
             losses = []
-
-            # Scale down lr on epochs after 3 to avoid noise
-            if epoch > 3:
-                learning_rate *= 0.6
 
             progress = tqdm(range(0, n, seq_len), desc=f"Epoch {epoch + 1}/{epochs}")
             for i in progress:
@@ -274,8 +288,18 @@ class RecurrentNeuralNetwork:
                 losses.append(loss)
                 progress.set_postfix(loss=f"{np.mean(losses[-20:]):.3f}")
 
-            print(f"Epoch {epoch + 1}: loss {np.mean(losses):.3f}  ")
-            self.save("training/rnn.npz")
+            val_ppl = self.evaluate(validation_ids)
+            print(
+                f"Epoch {epoch + 1}: Train Perplexity {np.exp(np.mean(losses)):.1f}  "
+                f"Validation Perplexity {val_ppl:.1f}  Learning Rate {learning_rate:g}"
+            )
+
+            if val_ppl < best_val:
+                best_val = val_ppl
+                self.learning_rate = learning_rate
+                self.save("training/rnn.npz")
+            else:
+                learning_rate /= 4
 
     # ------------------------------------------------------------------
     # Prediction
