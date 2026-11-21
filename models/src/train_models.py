@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def train_models(ngram, feed_forward, rnn):
+def train_models(ngram, feed_forward, rnn, validation):
     training_dir = Path("training")
     training_dir.mkdir(parents=True, exist_ok=True)
 
@@ -35,7 +35,7 @@ def train_models(ngram, feed_forward, rnn):
             rnn.load(rnn_path)
             print("RNN loaded from", rnn_path)
         else:
-            rnn.fit()
+            rnn.fit(validation)
             rnn.save(rnn_path)
             print("RNN trained and saved to", rnn_path)
 
