@@ -1,8 +1,8 @@
 class FFNNConfiguration:
     CURRENT_CONFIGURATION = {
-        "window_size": 7,
-        "embedding_dimension": 16,
-        "hidden_layer_dimension": 32,
+        "window_size": 8,
+        "embedding_dimension": 64,
+        "hidden_layer_dimension": 128,
         "learning_rate": 0.1,
         "eos_id": 1,
     }

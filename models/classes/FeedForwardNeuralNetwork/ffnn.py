@@ -53,6 +53,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
 
         self.ids = ids
         self.configuration = configuration
+        self.completed_epochs = 0
         self.random_state = 42
         self.sampling_rng = np.random.default_rng()
 
@@ -117,9 +118,9 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
     def _random_value(self, minimum, maximum):
         self.random_state = (67 * self.random_state + 12345) % (2**31)
 
-        fraction = self.random_state / (2**31 - 1)
+        fraction = np.float32(self.random_state / (2**31 - 1))
 
-        return minimum + fraction * (maximum - minimum)
+        return np.float32(minimum) + fraction * np.float32(maximum - minimum)
 
     def predict_next(self, context, temperature=0.0, top_k=40, blocked_ids=()):
         output_scores = self._forward(context)
@@ -186,6 +187,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         embedding_gradients,
         learning_rate,
     ):
+        learning_rate = np.float32(learning_rate)
         self.output_weights -= learning_rate * output_weight_gradients
         self.output_bias -= learning_rate * output_bias_gradients
         self.hidden_weights -= learning_rate * hidden_weight_gradients
@@ -256,6 +258,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
     """
 
     def _train_batch(self, contexts, targets, learning_rate):
+        learning_rate = np.float32(learning_rate)
         batch_size = len(contexts)
         row_indices = np.arange(batch_size)
 
@@ -265,13 +268,15 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         output_scores = hidden_values @ self.output_weights + self.output_bias
 
         output_scores -= np.max(output_scores, axis=1, keepdims=True)
-        probabilities = np.exp(output_scores)
-        probabilities /= np.sum(probabilities, axis=1, keepdims=True)
+        probabilities = np.exp(output_scores, dtype=np.float32)
+        probabilities /= np.sum(
+            probabilities, axis=1, keepdims=True, dtype=np.float32
+        )
 
         target_probabilities = np.maximum(
             probabilities[row_indices, targets], np.float32(1e-12)
         )
-        loss = float(-np.mean(np.log(target_probabilities)))
+        loss = np.float32(-np.mean(np.log(target_probabilities, dtype=np.float32)))
 
         output_gradients = probabilities
         output_gradients[row_indices, targets] -= 1.0
@@ -318,9 +323,16 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         - displays training progress and average loss for each epoch
     """
 
-    def fit(self, epochs=10, learning_rate=None, batch_size=64):
+    def fit(self, epochs=10, learning_rate=None, batch_size=64, checkpoint_path=None):
         if learning_rate is None:
             learning_rate = self.configuration.learning_rate
+
+        if epochs <= self.completed_epochs:
+            print(
+                f"FFNN checkpoint already has {self.completed_epochs} completed "
+                f"epochs (target: {epochs}); skipping training."
+            )
+            return
 
         contexts, targets = make_training_examples(
             self.ids, self.configuration.window_size
@@ -330,7 +342,8 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         targets = np.asarray(targets, dtype=np.int64)
         progress_interval = max(1, len(contexts) // (batch_size * 100))
 
-        for epoch in range(epochs):
+        while self.completed_epochs < epochs:
+            epoch = self.completed_epochs
             print(f"Epoch {epoch + 1}/{epochs}")
             total_loss = 0.0
             print(
@@ -361,6 +374,9 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
             average_loss = total_loss / len(contexts)
 
             print("Epoch", epoch + 1, "Average loss:", average_loss)
+            self.completed_epochs += 1
+            if checkpoint_path is not None:
+                self.save(checkpoint_path)
 
     # ----------------------------------------------------------------------------
     # SAVE AND LOADING
@@ -391,6 +407,7 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
                 output_weights=self.output_weights,
                 output_bias=self.output_bias,
                 random_state=np.int64(self.random_state),
+                completed_epochs=np.int64(self.completed_epochs),
             )
 
         print("Model saved to", file_path)
@@ -406,6 +423,11 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
             output_weights = archive["output_weights"]
             output_bias = archive["output_bias"]
             random_state = int(archive["random_state"].item())
+            completed_epochs = (
+                int(archive["completed_epochs"].item())
+                if "completed_epochs" in archive
+                else 0
+            )
 
             if "window_size" in archive:
                 configuration_data = {
@@ -454,5 +476,6 @@ class FeedForwardNeuralNetwork(FFNNForward, FFNNSampling):
         model.output_weights = np.asarray(output_weights, dtype=np.float32)
         model.output_bias = np.asarray(output_bias, dtype=np.float32)
         model.random_state = random_state
+        model.completed_epochs = completed_epochs
 
         return model

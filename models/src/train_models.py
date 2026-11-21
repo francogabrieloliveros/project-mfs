@@ -20,9 +20,13 @@ def train_models(ngram, feed_forward, rnn, validation):
         if ffnn_path.is_file():
             feed_forward = feed_forward.load(ffnn_path)
             print("FFNN loaded from", ffnn_path)
-        else:
-            feed_forward.fit(epochs=8, batch_size=64)
-            feed_forward.save(ffnn_path)
+        target_epochs = 8
+        if feed_forward.completed_epochs < target_epochs:
+            feed_forward.fit(
+                epochs=target_epochs,
+                batch_size=128,
+                checkpoint_path=ffnn_path,
+            )
             print("FFNN trained and saved to", ffnn_path)
 
     if rnn is not None:
