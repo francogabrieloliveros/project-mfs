@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type ModelKey = "ngram" | "ffnn" | "rnn";
 
 const splits = [
@@ -222,9 +224,9 @@ export default function DatasetPage() {
           <p className="text-gray-700 mt-3 text-justify">
             This randomness added fairness to the tests and improved the
             evaluation scores of all models.{" "}
-            <a href="/results" className={linkClass}>
+            <Link href="/results" className={linkClass}>
               See results.
-            </a>
+            </Link>
           </p>
         </section>
 
