@@ -14,9 +14,9 @@ const tokenizationRules = [
 ];
 
 const testRules = [
-  "Each sequence was placed into their respective arrays (split by <eos>)",
-  "Sequences with length < 50 words were removed (there are lines that do not make a full sentence, e.g. sports table data)",
-  "All suffix punctuation marks were removed. This ensures the last word in each sequence is the word to predict in training",
+  "Generate 3000 random positions within the range of the raw test dataset.",
+  "From these random positions, use current + the next 40 words as a test-set sample.",
+  "Then, we will have 3000 test items of length 41, where the last word will be the word-to-predict.",
 ];
 
 const sectionClass =
@@ -40,7 +40,7 @@ export default function DatasetPage() {
         <section className={sectionClass}>
           <h2 className="font-abril text-2xl mb-4 text-black">Dataset</h2>
           <div className="text-gray-700 space-y-4">
-            <p>
+            <p className="text-justify">
               The{" "}
               <a
                 href="https://huggingface.co/datasets/Salesforce/wikitext"
@@ -56,7 +56,7 @@ export default function DatasetPage() {
               , is a collection of over 100 million tokens extracted from the
               set of verified Good and Featured articles on Wikipedia.
             </p>
-            <p>
+            <p className="text-justify">
               Specifically, we used the{" "}
               <a
                 href="https://huggingface.co/datasets/Salesforce/wikitext"
@@ -117,23 +117,34 @@ export default function DatasetPage() {
           <h2 className="font-abril text-2xl mb-4 text-black">
             Test Set Preparation
           </h2>
-          <p className="text-gray-700 mb-3">
-            The data from <code className={codeClass}>test.txt</code> was
-            encoded using the training vocabulary and processed with these
-            rules:
+          <p className="text-gray-700 mb-3 text-justify">
+            Previously, we used the last word of each sequence as the word to
+            predict for the test-set. However, this resulted in low scores for
+            all models since it was unfair to predict pre-determined last words
+            of sequences which are usually extremely specific nouns, verbs, and
+            adjectives.
+          </p>
+          <p className="text-gray-700 mb-3 text-justify">
+            Observing this problem, we revised the test-set preparation with a
+            new approach but still using the same
+            <code className={codeClass}>test.txt</code> data.
           </p>
           <ul className="text-gray-700 space-y-2 list-disc list-inside">
             {testRules.map((rule) => (
               <li key={rule}>{rule}</li>
             ))}
           </ul>
+          <p className="text-gray-700 mt-3 text-justify">
+            This randomness added fairness to the tests and improved the
+            evaluation scores of all models.
+          </p>
         </section>
 
         <section className={sectionClass}>
           <h2 className="font-abril text-2xl mb-4 text-black">Vocabulary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 bg-gray-50 rounded-2xl">
-              <p className="font-abril text-3xl text-black">33,789</p>
+              <p className="font-abril text-3xl text-black">32,994</p>
               <p className="text-gray-600">
                 unique words including{" "}
                 <code className={codeClass}>&lt;unk&gt;</code> and{" "}
@@ -141,7 +152,7 @@ export default function DatasetPage() {
               </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-2xl">
-              <p className="font-abril text-3xl text-black">600 x 33,789</p>
+              <p className="font-abril text-3xl text-black">600 x 32,994</p>
               <p className="text-gray-600">
                 training dimension from 600 Wikipedia articles
               </p>
@@ -165,7 +176,7 @@ export default function DatasetPage() {
               <h3 className="font-semibold roboto mb-2">Target Variable</h3>
               <p className="text-gray-700">
                 The last word of each sequence, a classification over the
-                33,789-word vocabulary.
+                32,994-word vocabulary.
               </p>
             </div>
           </div>
