@@ -7,14 +7,14 @@ def run_demo(vocab, ngram, feed_forward, rnn):
     if ngram is not None:
         (next_id, _), _ = ngram.predict_next(
             prompt_ids,
-            temperature=0.75,
+            temperature=0.60,
             top_k=20,
             blocked_ids=blocked_ids,
         )
         generated_ids = ngram.generate(
             prompt_ids,
             max_tokens=50,
-            temperature=0.75,
+            temperature=0.60,
             top_k=20,
             blocked_ids=blocked_ids,
         )
