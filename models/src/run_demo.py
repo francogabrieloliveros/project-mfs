@@ -30,7 +30,7 @@ def run_demo(vocab, ngram, feed_forward, rnn):
         print("\n__________FFNN Prediction__________", flush=True)
         (next_id, _), _ = feed_forward.predict_next(
             context,
-            temperature=0.75,
+            temperature=0.8,
             top_k=20,
             blocked_ids=blocked_ids,
         )
@@ -38,7 +38,7 @@ def run_demo(vocab, ngram, feed_forward, rnn):
         generated_ids = feed_forward.generate(
             context,
             max_tokens=50,
-            temperature=0.75,
+            temperature=0.8,
             top_k=20,
             blocked_ids=blocked_ids,
         )
@@ -48,14 +48,14 @@ def run_demo(vocab, ngram, feed_forward, rnn):
         print("\n__________RNN Prediction__________", flush=True)
         (next_id, _), _ = rnn.predict_next(
             prompt_ids,
-            temperature=0.75,
+            temperature=0.65,
             top_k=20,
             blocked_ids=blocked_ids,
         )
         generated_ids = rnn.generate(
             prompt_ids,
             max_tokens=50,
-            temperature=0.75,
+            temperature=0.65,
             top_k=20,
             blocked_ids=blocked_ids,
         )
