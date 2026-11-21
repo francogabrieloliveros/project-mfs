@@ -1,3 +1,5 @@
+type ModelKey = "ngram" | "ffnn" | "rnn";
+
 const splits = [
   { name: "Training", articles: "600", rows: "36,718" },
   { name: "Validation", articles: "60", rows: "3,769" },
