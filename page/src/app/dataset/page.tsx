@@ -4,6 +4,44 @@ const splits = [
   { name: "Testing", articles: "60", rows: "4,358" },
 ];
 
+const models: { key: ModelKey; name: string; bar: string; hex: string }[] = [
+  { key: "ngram", name: "N-gram", bar: "bg-gray-800", hex: "#1f2937" },
+  { key: "ffnn", name: "FFNN", bar: "bg-blue-600", hex: "#2563eb" },
+  { key: "rnn", name: "RNN (LSTM)", bar: "bg-purple-600", hex: "#9333ea" },
+];
+
+const metrics: {
+  label: string;
+  better: "lower" | "higher";
+  unit: string;
+  values: Record<ModelKey, number>;
+}[] = [
+  {
+    label: "Perplexity",
+    better: "lower",
+    unit: "",
+    values: { ngram: 4970.86, ffnn: 3102.25, rnn: 1322.79 },
+  },
+  {
+    label: "Top-1 accuracy",
+    better: "higher",
+    unit: "%",
+    values: { ngram: 5.7196, ffnn: 4.797, rnn: 8.1796 },
+  },
+  {
+    label: "Top-5 accuracy",
+    better: "higher",
+    unit: "%",
+    values: { ngram: 12.1771, ffnn: 11.1931, rnn: 17.4662 },
+  },
+  {
+    label: "Top-10 accuracy",
+    better: "higher",
+    unit: "%",
+    values: { ngram: 16.6667, ffnn: 15.1292, rnn: 23.1242 },
+  },
+];
+
 const tokenizationRules = [
   "Keep casing",
   "Keep punctuations",
@@ -23,6 +61,8 @@ const sectionClass =
   "bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8";
 const linkClass = "underline text-black";
 const codeClass = "bg-gray-100 px-1 rounded";
+
+const fmt = (v: number, unit: string) => `${v.toFixed(2)}${unit}`;
 
 export default function DatasetPage() {
   return (
@@ -124,7 +164,50 @@ export default function DatasetPage() {
             of sequences which are usually extremely specific nouns, verbs, and
             adjectives.
           </p>
-          <p className="text-gray-700 mb-3 text-justify">
+          <section className="bg-white/60 backdrop-blur-sm rounded-3xl py-4 px-8">
+            <div className="overflow-x-auto">
+              <table className="w-full text-base text-left">
+                <thead>
+                  <tr className="border-b border-gray-300">
+                    <th className="py-2 pr-4 font-semibold text-gray-800">
+                      Metric
+                    </th>
+                    {models.map((m) => (
+                      <th
+                        key={m.key}
+                        className="py-2 pr-4 font-semibold text-gray-800 text-center"
+                      >
+                        {m.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics.map((row) => {
+                    return (
+                      <tr key={row.label} className="border-b border-gray-100">
+                        <td className="py-3 pr-4 font-semibold text-gray-800">
+                          {row.label} {row.better === "lower" ? "(↓)" : "(↑)"}
+                        </td>
+                        {models.map((m) => (
+                          <td
+                            key={m.key}
+                            className="py-3 pr-4 text-center font-mono"
+                          >
+                            <span className="text-gray-600">
+                              {fmt(row.values[m.key], row.unit)}
+                            </span>
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <p className="text-gray-700 mt-3 mb-3 text-justify">
             Observing this problem, we revised the test-set preparation with a
             new approach but still using the same
             <code className={codeClass}>test.txt</code> data.
@@ -136,7 +219,10 @@ export default function DatasetPage() {
           </ul>
           <p className="text-gray-700 mt-3 text-justify">
             This randomness added fairness to the tests and improved the
-            evaluation scores of all models.
+            evaluation scores of all models.{" "}
+            <a href="/results" className={linkClass}>
+              See results.
+            </a>
           </p>
         </section>
 
