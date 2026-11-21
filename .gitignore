@@ -5,6 +5,9 @@ __pycache__/
 *.pyo
 *.pyd
 *.DS_Store
+models/training/rnn-10.npz
+models/training/rnn-11.npz
+models/training/rnn-old.npz
 
 # === Node / Next.js (page/) ===
 # dependencies
