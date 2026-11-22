@@ -101,64 +101,104 @@ export default function MethodsPage() {
             <h2 className="font-abril text-2xl text-black mb-4">
               N-gram Language Model
             </h2>
-            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-              Statistical
-            </span>
           </div>
-          <div className="prose max-w-none text-gray-700 mb-6">
-            <p>
-              Predicts the next word based on frequency counts of n-word
-              sequences in training data. Uses the Markov assumption: the
-              probability of the next word depends only on the previous n-1
+          <div className="mb-6">
+            <p className="text-gray-700 mb-4 text-justify">
+              The N-gram model predicts the next word purely by counting. During
+              training it slides a window of n words over the training text, one
+              line at a time so that no window crosses a sentence boundary, and
+              records how often each sequence occurs, how often each context
+              (the first n-1 words of a window) occurs, and which words followed
+              each context. Nothing is learned by gradient descent; training is
+              a single pass of counting. The model uses the Markov assumption:
+              the probability of the next word depends only on the previous n-1
               words.
             </p>
+            <p className="text-gray-700 mb-4 text-justify">
+              To predict, the model takes the last n-1 words of the prompt as
+              the context and looks up the words that followed that context in
+              training. Each candidate is scored with add-alpha smoothing,{" "}
+              <code>P(word | context) = (count(context, word) + α) / (count(context) + α × V)</code>
+              , where V is the vocabulary size. This keeps the probability above
+              zero, so a word that never followed the context can still be
+              scored. Candidates are ranked from highest to lowest probability.
+              At temperature 0 the top candidate is chosen; otherwise the next
+              word is sampled from the top k candidates, weighted by their
+              probabilities and the temperature.
+            </p>
+            <p className="text-gray-700 mb-4 text-justify">
+              The model only proposes words that followed the same context in
+              training. If the context never appeared, there are no candidates:
+              generation stops early, and during evaluation the correct word
+              receives the uniform probability 1/V and counts as a top-k miss.
+              Because it looks at only the previous n-1 words, it also cannot
+              capture dependencies beyond that window.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h3 className="font-semibold text-green-700 mb-2 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
+          <figure className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white/70 p-4 md:p-6">
+            <svg
+              role="img"
+              aria-labelledby="ngram-diagram-title ngram-diagram-description"
+              viewBox="0 0 960 220"
+              className="h-auto w-full"
+            >
+              <title id="ngram-diagram-title">N-gram next-word prediction flow</title>
+              <desc id="ngram-diagram-description">
+                The previous n minus one words form the context, which is looked
+                up in the count tables to find the words that followed it in
+                training. Those words are scored with add-alpha smoothing, and
+                the highest-probability word is the next word.
+              </desc>
+              <defs>
+                <marker
+                  id="ngram-arrow"
+                  markerWidth="8"
+                  markerHeight="8"
+                  refX="6"
+                  refY="4"
+                  orient="auto"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Strengths
-              </h3>
-              <ul className="text-gray-700 space-y-1 list-disc list-inside">
-                <li>Simple, interpretable</li>
-                <li>Fast training/inference</li>
-                <li>No GPU needed</li>
-                <li>Good baseline</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-red-700 mb-2 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Limitations
-              </h3>
-              <ul className="text-gray-700 space-y-1 list-disc list-inside">
-                <li>Data sparsity problem</li>
-                <li>Fixed context window</li>
-                <li>No generalization to unseen n-grams</li>
-                <li>Curse of dimensionality</li>
-              </ul>
-            </div>
-          </div>
+                  <path d="M0 0 8 4 0 8Z" fill="#6b7280" />
+                </marker>
+              </defs>
+              <g fill="none" stroke="#6b7280" strokeWidth="2" markerEnd="url(#ngram-arrow)">
+                <path d="M218 110h28" />
+                <path d="M464 110h28" />
+                <path d="M710 110h28" />
+              </g>
+              <g fontFamily="Roboto, sans-serif" textAnchor="middle">
+                <rect x="8" y="57" width="210" height="106" rx="18" fill="#fce7f3" />
+                <text x="113" y="99" fontSize="17" fontWeight="700" fill="#111827">Context</text>
+                <text x="113" y="126" fontSize="14" fill="#4b5563">previous n-1 words</text>
+
+                <rect x="254" y="57" width="210" height="106" rx="18" fill="#e0f2fe" />
+                <text x="359" y="99" fontSize="17" fontWeight="700" fill="#111827">Count lookup</text>
+                <text x="359" y="126" fontSize="14" fill="#4b5563">words that followed it</text>
+
+                <rect x="500" y="57" width="210" height="106" rx="18" fill="#ede9fe" />
+                <text x="605" y="99" fontSize="17" fontWeight="700" fill="#111827">Smoothing</text>
+                <text x="605" y="126" fontSize="14" fill="#4b5563">add-alpha probabilities</text>
+
+                <rect x="746" y="57" width="210" height="106" rx="18" fill="#fce7f3" />
+                <text x="851" y="99" fontSize="17" fontWeight="700" fill="#111827">Next word</text>
+                <text x="851" y="126" fontSize="14" fill="#4b5563">top-ranked candidate</text>
+              </g>
+            </svg>
+            <figcaption className="mt-3 text-center text-sm text-gray-600">
+              The context is the previous n-1 words; this model uses n = 2, so
+              the context is a single word.
+            </figcaption>
+          </figure>
+          <h3 className="font-semibold roboto mb-2">Implementation</h3>
+          <p className="text-gray-700 mb-6 text-justify">
+            The model is implemented in Python with three dictionaries: the
+            count of each n-gram, the count of each context, and a lookup table
+            from each context to the words that followed it. The counts are
+            saved to a compressed .npz file and reloaded without retraining;
+            loading checks that the vocabulary size and n match the saved model.
+            We use n = 2 (a bigram) with a smoothing value of α = 0.1. No GPU is
+            needed.
+          </p>
           <div className="bg-gray-50 rounded-2xl p-4 mb-6">
             <h3 className="font-semibold text-gray-800 mb-2">
               Why we chose n = 2 (bigram)
@@ -229,16 +269,6 @@ export default function MethodsPage() {
               coherent sentences.
             </p>
           </div>
-
-          <div className="bg-gray-50 rounded-2xl p-4">
-            <h3 className="font-semibold text-gray-800 mb-2">
-              Implementation Details
-            </h3>
-            <p className="text-gray-700 font-mono text-sm">
-              Built with add-alpha smoothing, configurable n (2-5), efficient
-              count storage. Final model: n = 2.
-            </p>
-          </div>
         </section>
 
         {/* FFNN card */}
@@ -251,13 +281,13 @@ export default function MethodsPage() {
           <div className="prose max-w-none text-gray-700 mb-6">
             <p>
               Within the FFNN model, the next token in the text is predicted based on the previous n tokens. This means that each prediction is made based upon a window of context of size n = 8. <br></br> <br></br><span className="font-bold">Why 8, you may ask?</span> <br></br> The increase in context size became minimal after each retraining of the model where window size 7 to 8 transition on approxiamtely 1.3% accuracy increase for top10 k.<br></br><br></br>To train the model, the text is divided into sequences such that each sequence is a separate example in the training dataset. Within each sequence, the next token in the text is predicted based on the previous 8 tokens. In this way, as the window of tokens moves through the text, the model is presented with new combinations of words, and can begin to learn patterns between them.
-              <br></br><br></br>The final layer outputs a score for each token in the vocabulary. This score indicates how likely the model believes that token to be the next in the given context. In order to calculate likelihoods, the final output is passed through a softmax function. This results in a probability distribution for the output. The model can therefore estimate which token is most likely to come next. 64 examples were trained in each batch. Cross entropy loss was calculated after applying softmax to the output, and back propagation was applied to trace the errors in the model. Gradients were calculated for the output layer, hidden layer, and embedding layer parameters. Using gradient descent, the parameters of the model were updated, using learning rate value of 0.1. After training, the model can be used to generate text. 
+              <br></br><br></br>The final layer outputs a score for each token in the vocabulary. This score indicates how likely the model believes that token to be the next in the given context. In order to calculate likelihoods, the final output is passed through a softmax function. This results in a probability distribution for the output. The model can therefore estimate which token is most likely to come next. 64 examples were trained in each batch. Cross entropy loss was calculated after applying softmax to the output, and back propagation was applied to trace the errors in the model. Gradients were calculated for the output layer, hidden layer, and embedding layer parameters. Using gradient descent, the parameters of the model were updated, using learning rate value of 0.1. After training, the model can be used to generate text.
             </p>
           </div>
           <figure className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white/70 p-4 md:p-6">
             <svg
               role="img"
-              aria-labelledby="ffnn-diagram-title ffnn-diagram-description" 
+              aria-labelledby="ffnn-diagram-title ffnn-diagram-description"
               viewBox="0 0 960 220"
               className="h-auto w-full"
             >
