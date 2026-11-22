@@ -65,7 +65,7 @@ export default function Home() {
                 View repository ↗
               </a>
               <a
-                href="https://canva.link/2nbkshkl40cf0r4"
+                href="https://canva.link/7td8vj25cats9fs"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-black/2 px-5 py-3 text-sm font-medium text-gray-900 backdrop-blur-sm transition hover:bg-black/5"
