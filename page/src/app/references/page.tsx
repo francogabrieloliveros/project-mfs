@@ -13,6 +13,17 @@ const references: string[] = [
   "StatQuest with Josh Starmer. (2022, July 11). Recurrent neural networks (RNNs), clearly explained!!! [Video]. YouTube. https://youtu.be/AsNTP8Kwu80",
   "StatQuest with Josh Starmer. (2022, November 7). Long short-term memory (LSTM), clearly explained [Video]. YouTube. https://youtu.be/YCzL96nL7j0",
   "dida. (2026, November 18). What is an LSTM neural network? https://dida.do/what-is-an-lstm-neural-network",
+  "The Coding Train. (n.d.). 10.12: Neural networks: Feedforward algorithm part 1 - the nature of code [Video]. YouTube. Retrieved November 22, 2026, from https://www.youtube.com/watch?v=qWK7yW8oS0I",
+  "Neural networks from scratch - p.1 intro and neuron code - YouTube. (n.d.). Www.Youtube.Com. Retrieved November 22, 2026, from https://www.youtube.com/watch?v=Wo5dMEP_BbI&list=PLQVvvaa0QuDcjD5BAw2DxE6OF2tius3V3",
+  "Chia, A. (2024, May 9). An introduction to batch processing. Splunk. https://www.splunk.com/en_us/blog/learn/batch-processing.html",
+  "GeeksforGeeks. (2024, June 20). Feedforward neural network. GeeksforGeeks. https://www.geeksforgeeks.org/deep-learning/feedforward-neural-network/",
+  "Mehra, V. (2025, September 16). Feed-forward neural networks explained: A complete tutorial. Datacamp.Com; DataCamp. https://www.datacamp.com/tutorial/feed-forward-neural-networks-explained",
+  "Dr. Amir-Hossein Karimi. (2026, November 12). Lecture 09 part 05 -- feed-forward neural networks [Video]. YouTube. https://www.youtube.com/watch?v=Ts9chOhkc80",
+  "Labate, D. (2024). Deep learning and neural networks. https://www.math.uh.edu/~dlabate/Lecture_6373_01.pdf",
+  "Studyopedia Editorial Staff. (2024, October 6). Feedforward neural networks (FNN). Studyopedia. https://studyopedia.com/deep-learning/feedforward-neural-networks/",
+  "A very basic introduction to feed-forward neural networks - DZone AI. (n.d.). Dzone.Com. Retrieved November 22, 2026, from https://dzone.com/articles/the-very-basic-introduction-to-feed-forward-neural",
+  "Understanding feedforward neural networks | LearnOpenCV. (2017, October 9). https://learnopencv.com/understanding-feedforward-neural-networks/",
+  "scgupta. (n.d.). Feedforward neural networks: The foundation of deep learning. Scgupta. Retrieved November 22, 2026, from https://www.ml4devs.com/what-is/feedforward-neural-networks/",
 ];
 
 export default function ReferencesPage() {

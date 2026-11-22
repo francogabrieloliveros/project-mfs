@@ -1,165 +1,133 @@
 import Link from "next/link";
 
+const projectAreas = [
+  {
+    href: "/dataset",
+    title: "Dataset",
+    description: "Explore the WikiText-2 data used to train and evaluate our models.",
+  },
+  {
+    href: "/methods",
+    title: "Methods",
+    description: "See how n-gram, feed-forward, and recurrent models predict words.",
+  },
+  {
+    href: "/experiments",
+    title: "Experiments",
+    description: "Review the data splits, settings, and evaluation metrics.",
+  },
+  {
+    href: "/results",
+    title: "Results",
+    description: "Compare model performance on next-word prediction.",
+  },
+  {
+    href: "/discussion",
+    title: "Discussion",
+    description: "Read what the results show, along with limitations and future work.",
+  },
+  {
+    href: "/references",
+    title: "References",
+    description: "Find the sources and tools used throughout the project.",
+  },
+];
+
 export default function Home() {
-  const groupMembers = [
-    "Member 1 — Role",
-    "Member 2 — Role",
-    "Member 3 — Role",
-    "Member 4 — Role",
-  ];
-
-  const sections = [
-    {
-      href: "/dataset",
-      title: "Dataset",
-      desc: "Source, size, features, target & preprocessing",
-    },
-    {
-      href: "/methods",
-      title: "Methods",
-      desc: "N-gram, FFNN, RNN — how they work & implementation",
-    },
-    {
-      href: "/experiments",
-      title: "Experiments",
-      desc: "Data splits, metrics, hyperparameters",
-    },
-    {
-      href: "/results",
-      title: "Results",
-      desc: "Comparison tables & figures across all models",
-    },
-    {
-      href: "/discussion",
-      title: "Discussion",
-      desc: "Analysis, limitations & future improvements",
-    },
-    {
-      href: "/references",
-      title: "References",
-      desc: "Citations, disclosures & links",
-    },
-  ];
-
   return (
-    <main className="flex-1 min-h-screen py-32 px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Hero Section */}
-        <section className="text-center mb-20">
-          <h1 className="font-abril text-5xl md:text-7xl mb-6 text-black">
-            Project MFS
-          </h1>
-          <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
-            Next Word Prediction with N-gram, Feed Forward Neural Network, and
-            Recursive Neural Network
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {groupMembers.map((member, i) => (
-              <span
-                key={i}
-                className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm border border-gray-200"
+    <>
+      <section className="px-6 pb-20 pt-28 md:pb-24 md:pt-36">
+        <div className="mx-auto max-w-6xl">
+          <header className="mx-auto mb-10 max-w-3xl text-center">
+            <h1 className="font-abril mb-5 text-5xl leading-tight text-black sm:text-6xl md:text-7xl">
+              Project MFS
+            </h1>
+            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-gray-700 md:text-xl">
+              We compare <span className="font-semibold text-[#d889a7]">n-gram</span>,{" "}
+              <span className="font-semibold text-[#79a9cf]">feed-forward</span>, and{" "}
+              <span className="font-semibold text-[#a68bc1]">recurrent neural networks</span>{" "}
+              to understand how computers predict what comes next in a text.
+            </p>
+            <p className="mt-5 text-sm leading-relaxed text-gray-600">
+              Oliveros, Franco Gabriel P. <span aria-hidden="true">·</span>{" "}
+              Silva, Samuel <span aria-hidden="true">·</span> Torres, Marck John M.
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+              <a
+                href="https://github.com/francogabrieloliveros/project-mfs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-white/90 bg-white/65 px-5 py-3 text-sm font-medium text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_6px_20px_rgba(0,0,0,0.06)] backdrop-blur-2xl transition hover:bg-white/85"
               >
-                {member}
-              </span>
-            ))}
-          </div>
-        </section>
-
-        {/* Problem Statement & Motivation */}
-        <section className="mb-20 p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200">
-          <h2 className="font-abril text-3xl mb-4 text-black">
-            Problem Statement & Motivation
-          </h2>
-          <div className="prose max-w-none text-gray-700">
-            <p className="mb-4">
-              <strong>Problem:</strong> Given a sequence of words, predict the
-              most probable next word. This is a fundamental task in natural
-              language processing with applications in autocomplete, text
-              generation, and language modeling.
-            </p>
-            <p className="mb-4">
-              <strong>Motivation:</strong> Comparing classical statistical
-              approaches (N-grams) with modern neural architectures (FFNN, RNN)
-              reveals the trade-offs between simplicity, interpretability, and
-              predictive power. Understanding these trade-offs guides model
-              selection for real-world deployment constraints.
-            </p>
-          </div>
-        </section>
-
-        {/* Project Links */}
-        <section className="mb-20">
-          <h2 className="font-abril text-3xl mb-6 text-black text-center">
-            Project Links
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <a
-              href="https://github.com/francogabrieloliveros/project-mfs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group p-6 bg-gray-50 rounded-2xl border border-gray-200 hover:border-black/50 hover:shadow-lg transition-all flex flex-col"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <svg
-                  className="w-8 h-8 text-black group-hover:scale-110 transition"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                  <path d="M12 .8a11.2 11.2 0 0 0-3.54 21.83c.56.1.77-.24.77-.54v-2.1c-3.14.68-3.8-1.33-3.8-1.33-.5-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 .1.75 2.25 3.35 1.6.1-.73.4-1.23.72-1.51-2.5-.29-5.13-1.25-5.13-5.57 0-1.23.44-2.23 1.16-3.02-.12-.29-.5-1.43.1-2.98 0 0 .95-.3 3.08 1.15a10.7 10.7 0 0 1 5.61 0c2.14-1.45 3.08-1.15 3.08-1.15.61 1.55.23 2.69.12 2.98.72.79 1.15 1.79 1.15 3.02 0 4.33-2.63 5.27-5.14 5.56.41.35.77 1.03.77 2.08v3.09c0 .3.2.65.78.54A11.2 11.2 0 0 0 12 .8Z" />
                 </svg>
-                <span className="font-semibold text-lg">GitHub Repository</span>
-              </div>
-              <p className="text-gray-600 text-sm">
-                Source code, experiments, and trained models
-              </p>
-            </a>
-            <a
-              href="https://docs.google.com/presentation/d/your-slides"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group p-6 bg-gray-50 rounded-2xl border border-gray-200 hover:border-black/50 hover:shadow-lg transition-all flex flex-col"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <svg
-                  className="w-8 h-8 text-yellow-600 group-hover:scale-110 transition"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H6v-2h6v2zm4-4H6v-2h10v2zm0-4H6V7h10v2z" />
+                View repository ↗
+              </a>
+              <a
+                href="https://canva.link/2nbkshkl40cf0r4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-black/2 px-5 py-3 text-sm font-medium text-gray-900 backdrop-blur-sm transition hover:bg-black/5"
+              >
+                <svg aria-hidden="true" viewBox="0 0 48 48" className="h-6 w-6 shrink-0">
+                  <defs>
+                    <linearGradient id="canva-mark" x1="8" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stopColor="#00c4cc" />
+                      <stop offset="0.52" stopColor="#3584e4" />
+                      <stop offset="1" stopColor="#7d2ae8" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="24" cy="24" r="24" fill="url(#canva-mark)" />
+                  <text x="24" y="35" textAnchor="middle" fill="white" fontFamily="cursive" fontSize="35" fontStyle="italic" fontWeight="700">C</text>
                 </svg>
-                <span className="font-semibold text-lg">
-                  Presentation Slides
-                </span>
-              </div>
-              <p className="text-gray-600 text-sm">
-                Project presentation (PDF / Google Slides)
-              </p>
-            </a>
-          </div>
-        </section>
+                Presentation slides ↗
+              </a>
+            </div>
+          </header>
 
-        {/* Navigation Cards */}
-        <section>
-          <h2 className="font-abril text-3xl mb-8 text-center text-black">
+          <article className="mb-16 rounded-3xl border border-white/70 bg-white/65 p-6 shadow-sm backdrop-blur-sm md:p-8">
+            <h2 className="font-abril mb-4 text-2xl text-black md:text-3xl">
+              Problem Statement &amp; Motivation
+            </h2>
+            <p className="mb-4 text-sm leading-relaxed text-gray-700 md:text-base">
+              <strong className="text-black">Problem:</strong> Given a sequence
+              of words, predict the most probable next word. This is a
+              fundamental task in natural language processing with applications
+              in autocomplete, text generation, and language modeling.
+            </p>
+            <p className="text-sm leading-relaxed text-gray-700 md:text-base">
+              <strong className="text-black">Motivation:</strong> Comparing
+              classical statistical approaches (N-grams) with modern neural
+              architectures (FFNN, RNN) reveals the trade-offs between
+              simplicity, interpretability, and predictive power. Understanding
+              these trade-offs guides model selection for real-world deployment
+              constraints.
+            </p>
+          </article>
+
+          <h2 className="font-abril mb-6 text-center text-3xl text-black md:text-4xl">
             Explore the Project
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sections.map((section) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {projectAreas.map((area) => (
               <Link
-                key={section.href}
-                href={section.href}
-                className="group p-6 bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 hover:border-black/50 hover:shadow-xl transition-all duration-300"
+                key={area.href}
+                href={area.href}
+                className="group min-h-40 rounded-3xl border border-white/70 bg-white/75 p-6 shadow-sm backdrop-blur-sm transition hover:-translate-y-1 hover:border-black/20 hover:bg-white/90 hover:shadow-md"
               >
-                <h3 className="font-abril text-2xl mb-3 text-black group-hover:text-gray-800">
-                  {section.title}
-                </h3>
-                <p className="text-gray-600">{section.desc}</p>
+                <h2 className="mb-2 text-lg font-bold text-black">{area.title}</h2>
+                <p className="mb-5 text-sm leading-relaxed text-gray-700">
+                  {area.description}
+                </p>
+                <span className="text-xs font-medium text-gray-600 group-hover:text-black">
+                  Explore →
+                </span>
               </Link>
             ))}
           </div>
-        </section>
-      </div>
-    </main>
+        </div>
+      </section>
+    </>
   );
 }
