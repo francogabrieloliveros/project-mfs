@@ -176,72 +176,83 @@ export default function MethodsPage() {
             <h2 className="font-abril text-2xl text-black mb-4">
               Feed-Forward Neural Network (FFNN)
             </h2>
-            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-              Neural (Fixed Context)
-            </span>
           </div>
           <div className="prose max-w-none text-gray-700 mb-6">
             <p>
-              Fixed-size context window fed through an embedding layer → hidden
-              layers → output softmax over the vocabulary. Learns distributed
-              word representations.
+              Within the FFNN model, the next token in the text is predicted based on the previous n tokens. This means that each prediction is made based upon a window of context of size n = 8. <br></br> <br></br><span className="font-bold">Why 8, you may ask?</span> <br></br> The increase in context size became minimal after each retraining of the model where window size 7 to 8 transition on approxiamtely 1.3% accuracy increase for top10 k.<br></br><br></br>To train the model, the text is divided into sequences such that each sequence is a separate example in the training dataset. Within each sequence, the next token in the text is predicted based on the previous 8 tokens. In this way, as the window of tokens moves through the text, the model is presented with new combinations of words, and can begin to learn patterns between them.
+              <br></br><br></br>The final layer outputs a score for each token in the vocabulary. This score indicates how likely the model believes that token to be the next in the given context. In order to calculate likelihoods, the final output is passed through a softmax function. This results in a probability distribution for the output. The model can therefore estimate which token is most likely to come next. 64 examples were trained in each batch. Cross entropy loss was calculated after applying softmax to the output, and back propagation was applied to trace the errors in the model. Gradients were calculated for the output layer, hidden layer, and embedding layer parameters. Using gradient descent, the parameters of the model were updated, using learning rate value of 0.1. After training, the model can be used to generate text. 
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h3 className="font-semibold text-green-700 mb-2 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
+          <figure className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white/70 p-4 md:p-6">
+            <svg
+              role="img"
+              aria-labelledby="ffnn-diagram-title ffnn-diagram-description" 
+              viewBox="0 0 960 220"
+              className="h-auto w-full"
+            >
+              <title id="ffnn-diagram-title">FFNN next-word prediction flow</title>
+              <desc id="ffnn-diagram-description">
+                An n-token input window, configured as n equals eight, becomes
+                64-dimensional embeddings, which are
+                flattened into one context vector, passed through a 128-unit
+                ReLU hidden layer, then scored across the vocabulary with
+                softmax probabilities.
+              </desc>
+              <defs>
+                <marker
+                  id="ffnn-arrow"
+                  markerWidth="8"
+                  markerHeight="8"
+                  refX="6"
+                  refY="4"
+                  orient="auto"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Strengths
-              </h3>
-              <ul className="text-gray-700 space-y-1 list-disc list-inside">
-                <li>Learns word embeddings</li>
-                <li>Generalizes to similar contexts</li>
-                <li>Parallelizable training</li>
-                <li>Better than n-grams on seen data</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-red-700 mb-2 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Limitations
-              </h3>
-              <ul className="text-gray-700 space-y-1 list-disc list-inside">
-                <li>Fixed context window</li>
-                <li>No sequential memory</li>
-                <li>Many parameters</li>
-                <li>Overfits on small data</li>
-              </ul>
-            </div>
-          </div>
-          <div className="bg-gray-50 rounded-2xl p-4">
-            <h3 className="font-semibold text-gray-800 mb-2">
-              Implementation Details
-            </h3>
-            <p className="text-gray-700 font-mono text-sm">
-              Embedding dim 128-512, 2-3 hidden layers (ReLU), dropout, Adam
-              optimizer, cross-entropy loss.
-            </p>
-          </div>
+                  <path d="M0 0 8 4 0 8Z" fill="#6b7280" />
+                </marker>
+              </defs>
+              <g fill="none" stroke="#6b7280" strokeWidth="2" markerEnd="url(#ffnn-arrow)">
+                <path d="M158 110h28" />
+                <path d="M336 110h28" />
+                <path d="M514 110h28" />
+                <path d="M692 110h28" />
+              </g>
+              <g fontFamily="Roboto, sans-serif" textAnchor="middle">
+                <rect x="8" y="57" width="150" height="106" rx="18" fill="#fce7f3" />
+                <text x="83" y="99" fontSize="17" fontWeight="700" fill="#111827">Window (n = 8)</text>
+                <text x="83" y="126" fontSize="14" fill="#4b5563">previous tokens</text>
+
+                <rect x="186" y="57" width="150" height="106" rx="18" fill="#e0f2fe" />
+                <text x="261" y="99" fontSize="17" fontWeight="700" fill="#111827">Embeddings</text>
+                <text x="261" y="126" fontSize="14" fill="#4b5563">64 values per token</text>
+
+                <rect x="364" y="57" width="150" height="106" rx="18" fill="#f3f4f6" />
+                <text x="439" y="99" fontSize="17" fontWeight="700" fill="#111827">Flatten</text>
+                <text x="439" y="126" fontSize="14" fill="#4b5563">512-value vector</text>
+
+                <rect x="542" y="57" width="150" height="106" rx="18" fill="#ede9fe" />
+                <text x="617" y="99" fontSize="17" fontWeight="700" fill="#111827">Hidden layer</text>
+                <text x="617" y="126" fontSize="14" fill="#4b5563">128 units · ReLU</text>
+
+                <rect x="720" y="57" width="228" height="106" rx="18" fill="#fce7f3" />
+                <text x="834" y="99" fontSize="17" fontWeight="700" fill="#111827">Next-word scores</text>
+                <text x="834" y="126" fontSize="14" fill="#4b5563">softmax over vocabulary</text>
+              </g>
+            </svg>
+            <figcaption className="mt-3 text-center text-sm text-gray-600">
+              The window size is n; this model uses n = 8 and outputs a
+              probability for every possible next word.
+            </figcaption>
+          </figure>
+          <h3 className="font-semibold roboto mb-2">Implementation</h3>
+          <p className="text-gray-700 mb-4 text-justify">
+            The model is implemented in NumPy with 64-dimensional embeddings,
+            one 128-unit ReLU hidden layer, and an output for every vocabulary
+            token. We use n = 8 because increasing the window further gave only
+            minimal accuracy gains. We train with batches of 64, softmax
+            cross-entropy, and backpropagation to update the weights and
+            embeddings. Training is configured for 8 epochs at a learning rate
+            of 0.1, with a checkpoint saved after each completed epoch.
+          </p>
         </section>
 
         {/* RNN card */}
