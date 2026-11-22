@@ -59,12 +59,12 @@ const samples: { model: string; next: string; sequence: string }[] = [
   {
     model: "N-gram",
     next: "to",
-    sequence: `" The first of the time , and the series of the city , and the other countries , a major roads and a total syntheses including the end of the first down the first season . He is the end of the game . <eos>`,
+    sequence: `"The first of the time , and the series of the city , and the other countries , a major roads and a total syntheses including the end of the first down the first season . He is the end of the game . <eos>`,
   },
   {
     model: "FFNN",
     next: "was",
-    sequence: `received the music of the species 's work . The common starling is also common starling . The common starling may be considered by the common starling ( Op. 39 ) ( 23 % ) , and the other common starling are to be known as of whom they can`,
+    sequence: `that year a range of the series . In the case of Alkan 's brother , who is not common in some sets .`,
   },
   {
     model: "RNN (LSTM)",
@@ -217,7 +217,7 @@ export default function ResultsPage() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-base">
             {[
-              ["Temperature", "0.75"],
+              ["Temperature", "N-gram 0.60 · FFNN 0.80 · RNN 0.65"],
               ["Top-k", "20"],
               ["Max new tokens", "50"],
               ["Blocked token", "<unk>"],

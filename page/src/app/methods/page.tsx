@@ -159,13 +159,84 @@ export default function MethodsPage() {
               </ul>
             </div>
           </div>
+          <div className="bg-gray-50 rounded-2xl p-4 mb-6">
+            <h3 className="font-semibold text-gray-800 mb-2">
+              Why we chose n = 2 (bigram)
+            </h3>
+            <p className="text-gray-700 mb-4 text-justify">
+              We compared n = 2 to 5 on the same test queries. The bigram scored
+              best on every metric. Longer contexts match more specific phrases,
+              but they are also seen less often in training: at n = 3 only
+              about 78% of test contexts appear in the training data, and at
+              n = 5 only about 14%. Our n-gram has no backoff, so an unseen
+              context has no candidates (a top-k miss) and gets a uniform
+              probability, which raises perplexity. A one-word context is seen
+              almost every time (about 99%), and common pairs such as{" "}
+              <code>of the</code> repeat often in the training text.
+            </p>
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-left text-sm text-gray-700">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="py-2 font-semibold">n</th>
+                    <th className="py-2 font-semibold">Contexts seen</th>
+                    <th className="py-2 font-semibold">Perplexity</th>
+                    <th className="py-2 font-semibold">Top-1</th>
+                    <th className="py-2 font-semibold">Top-5</th>
+                    <th className="py-2 font-semibold">Top-10</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-200 font-semibold">
+                    <td className="py-2">2</td>
+                    <td className="py-2">99.33%</td>
+                    <td className="py-2">898.41</td>
+                    <td className="py-2">17.70%</td>
+                    <td className="py-2">36.47%</td>
+                    <td className="py-2">44.27%</td>
+                  </tr>
+                  <tr className="border-b border-gray-200">
+                    <td className="py-2">3</td>
+                    <td className="py-2">77.87%</td>
+                    <td className="py-2">6799.55</td>
+                    <td className="py-2">15.00%</td>
+                    <td className="py-2">26.03%</td>
+                    <td className="py-2">30.00%</td>
+                  </tr>
+                  <tr className="border-b border-gray-200">
+                    <td className="py-2">4</td>
+                    <td className="py-2">39.33%</td>
+                    <td className="py-2">20571.03</td>
+                    <td className="py-2">7.83%</td>
+                    <td className="py-2">12.10%</td>
+                    <td className="py-2">12.77%</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2">5</td>
+                    <td className="py-2">14.33%</td>
+                    <td className="py-2">29286.55</td>
+                    <td className="py-2">3.07%</td>
+                    <td className="py-2">4.10%</td>
+                    <td className="py-2">4.10%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-gray-700 text-justify">
+              The trade-off is that a bigram only sees the previous word, so
+              text generated with it is locally plausible but drifts and can
+              loop. It is best suited to next-word prediction, not to producing
+              coherent sentences.
+            </p>
+          </div>
+
           <div className="bg-gray-50 rounded-2xl p-4">
             <h3 className="font-semibold text-gray-800 mb-2">
               Implementation Details
             </h3>
             <p className="text-gray-700 font-mono text-sm">
               Built with add-alpha smoothing, configurable n (2-5), efficient
-              count storage.
+              count storage. Final model: n = 2.
             </p>
           </div>
         </section>
