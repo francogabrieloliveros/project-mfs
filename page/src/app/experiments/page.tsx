@@ -3,15 +3,15 @@ const DATASET = "WikiText-2 (raw, v1), using its standard train / validation / t
 const models = ["N-gram", "FFNN", "RNN (LSTM)"];
 
 const hyperparameters: { label: string; values: string[] }[] = [
-  { label: "Context", values: ["Previous 1 token (n = 2)", "Previous 7 tokens", "Full prompt"] },
-  { label: "Embedding dim", values: ["–", "16", "64"] },
-  { label: "Hidden units", values: ["–", "32", "128"] },
+  { label: "Context", values: ["Previous 1 token (n = 2)", "Previous 8 tokens", "Full prompt"] },
+  { label: "Embedding dim", values: ["–", "64", "64"] },
+  { label: "Hidden units", values: ["–", "128", "128"] },
   { label: "Smoothing", values: ["Add-α, α = 0.1", "–", "–"] },
-  { label: "Learning rate", values: ["–", "0.1", "1.0 (×0.6 per epoch from epoch 5)"] },
-  { label: "Epochs", values: ["–", "8", "15"] },
+  { label: "Learning rate", values: ["–", "0.1", "20.0 (÷4 whenever validation perplexity doesn't improve)"] },
+  { label: "Epochs", values: ["–", "8", "13"] },
   { label: "Batch size", values: ["–", "64", "64"] },
   { label: "BPTT length", values: ["–", "–", "32"] },
-  { label: "Gradient clipping", values: ["–", "–", "5.0 (global norm)"] },
+  { label: "Gradient clipping", values: ["–", "–", "0.25 (global norm)"] },
 ];
 
 // Small typesetting helpers for the metric formulas

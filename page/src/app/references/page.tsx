@@ -3,6 +3,7 @@ const sectionClass =
 
 // Paste your references here.
 const references: string[] = [
+  "Kumaresan, S. (2024, February 16). Cracking the language code: A comprehensive guide to n-gram models and text generation. Medium. https://medium.com/@sundharesansk11/cracking-the-language-code-a-comprehensive-guide-to-n-gram-models-and-text-generation-b670335ce6e8",
   "StatQuest with Josh Starmer. (2020, August 31). The essential main ideas of neural networks [Video]. YouTube. https://youtu.be/CqOfi41LfDw",
   "StatQuest with Josh Starmer. (2020, November 23). Neural networks pt. 3: ReLU in action!!! [Video]. YouTube. https://youtu.be/68BZ5f7P94E",
   "GeeksforGeeks. (2026, May 6). Introduction to recurrent neural networks. https://www.geeksforgeeks.org/machine-learning/introduction-to-recurrent-neural-network/",

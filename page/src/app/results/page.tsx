@@ -16,30 +16,30 @@ const metrics: {
     label: "Perplexity",
     better: "lower",
     unit: "",
-    values: { ngram: 4970.86, ffnn: 3102.25, rnn: 1322.79 },
+    values: { ngram: 898.4069944465869, ffnn: 247.78562683986024, rnn: 165.467388034928 },
   },
   {
     label: "Top-1 accuracy",
     better: "higher",
     unit: "%",
-    values: { ngram: 5.7196, ffnn: 4.797, rnn: 8.1796 },
+    values: { ngram: 17.7, ffnn: 20.233333333333334, rnn: 22.9 },
   },
   {
     label: "Top-5 accuracy",
     better: "higher",
     unit: "%",
-    values: { ngram: 12.1771, ffnn: 11.1931, rnn: 17.4662 },
+    values: { ngram: 36.46666666666667, ffnn: 39.46666666666667, rnn: 43.3 },
   },
   {
     label: "Top-10 accuracy",
     better: "higher",
     unit: "%",
-    values: { ngram: 16.6667, ffnn: 15.1292, rnn: 23.1242 },
+    values: { ngram: 44.26666666666667, ffnn: 46.96666666666667, rnn: 50.66666666666667 },
   },
 ];
 
 const accuracyMetrics = metrics.filter((m) => m.unit === "%");
-const AXIS_MAX = 25; // % — top of the bar scale
+const AXIS_MAX = 60; // % — top of the bar scale
 
 function bestModel(m: (typeof metrics)[number]): ModelKey {
   const entries = Object.entries(m.values) as [ModelKey, number][];
@@ -50,23 +50,9 @@ function bestModel(m: (typeof metrics)[number]): ModelKey {
 
 const fmt = (v: number, unit: string) => `${v.toFixed(2)}${unit}`;
 
-// Line chart geometry (SVG units)
-const CHART = { w: 600, h: 300, left: 48, right: 24, top: 36, bottom: 44 };
-const KS = [1, 5, 10]; // matches the order of accuracyMetrics
-const GRID = [0, 5, 10, 15, 20, 25];
-const xFor = (k: number) =>
-  CHART.left + ((k - 1) / 9) * (CHART.w - CHART.left - CHART.right);
-const yFor = (v: number) =>
-  CHART.top + (1 - v / AXIS_MAX) * (CHART.h - CHART.top - CHART.bottom);
-
-// Perplexity charts
+// Perplexity bars
 const perplexity = metrics[0];
-const PPL_MAX = 5000;
-const PPL_GRID = [0, 1000, 2000, 3000, 4000, 5000];
-const xForModel = (i: number) =>
-  CHART.left + ((i + 0.5) / models.length) * (CHART.w - CHART.left - CHART.right);
-const yForPpl = (v: number) =>
-  CHART.top + (1 - v / PPL_MAX) * (CHART.h - CHART.top - CHART.bottom);
+const PPL_MAX = 1000;
 
 // One sample run of run_demo.py
 const samples: { model: string; next: string; sequence: string }[] = [
@@ -148,8 +134,8 @@ export default function ResultsPage() {
           </div>
           <p className="text-gray-600 text-base mt-4">
             Green marks the best model per metric. All runs use temperature 0;
-            top-k accuracy uses k = 1, 5, and 10. Perplexity is computed from
-            one prediction per test sequence.
+            top-k accuracy uses k = 1, 5, and 10. The N-gram model uses n = 2.
+            Perplexity is computed from one prediction per test sequence.
           </p>
         </section>
 
@@ -214,155 +200,6 @@ export default function ResultsPage() {
               </div>
             ))}
           </div>
-        </section>
-
-        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
-          <h2 className="font-abril text-2xl mb-4 text-black">
-            Accuracy vs. k
-          </h2>
-          <div className="flex flex-wrap gap-4 text-base text-gray-700 mb-4">
-            {models.map((m) => (
-              <span key={m.key} className="flex items-center gap-2">
-                <span className={`inline-block w-3 h-3 rounded ${m.bar}`} />
-                {m.name}
-              </span>
-            ))}
-          </div>
-          <svg
-            viewBox={`0 0 ${CHART.w} ${CHART.h}`}
-            className="w-full h-auto"
-            role="img"
-            aria-label="Top-k accuracy at k = 1, 5, and 10 for each model"
-          >
-            {GRID.map((g) => (
-              <g key={g}>
-                <line
-                  x1={CHART.left}
-                  x2={CHART.w - CHART.right}
-                  y1={yFor(g)}
-                  y2={yFor(g)}
-                  stroke="#e5e7eb"
-                />
-                <text
-                  x={CHART.left - 8}
-                  y={yFor(g) + 4}
-                  textAnchor="end"
-                  fontSize="14"
-                  fill="#6b7280"
-                >
-                  {g}%
-                </text>
-              </g>
-            ))}
-            {KS.map((k) => (
-              <text
-                key={k}
-                x={xFor(k)}
-                y={CHART.h - CHART.bottom + 24}
-                textAnchor="middle"
-                fontSize="14"
-                fill="#6b7280"
-              >
-                k = {k}
-              </text>
-            ))}
-            {models.map((m) => {
-              const pts = accuracyMetrics.map((row, i) => ({
-                x: xFor(KS[i]),
-                y: yFor(row.values[m.key]),
-              }));
-              return (
-                <g key={m.key}>
-                  <polyline
-                    points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
-                    fill="none"
-                    stroke={m.hex}
-                    strokeWidth="2.5"
-                    strokeLinejoin="round"
-                  />
-                  {pts.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="4.5" fill={m.hex} />
-                  ))}
-                </g>
-              );
-            })}
-          </svg>
-        </section>
-
-        <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
-          <h2 className="font-abril text-2xl mb-4 text-black">
-            Perplexity by Model
-          </h2>
-          <svg
-            viewBox={`0 0 ${CHART.w} ${CHART.h}`}
-            className="w-full h-auto"
-            role="img"
-            aria-label="Perplexity for each model"
-          >
-            {PPL_GRID.map((g) => (
-              <g key={g}>
-                <line
-                  x1={CHART.left}
-                  x2={CHART.w - CHART.right}
-                  y1={yForPpl(g)}
-                  y2={yForPpl(g)}
-                  stroke="#e5e7eb"
-                />
-                <text
-                  x={CHART.left - 8}
-                  y={yForPpl(g) + 4}
-                  textAnchor="end"
-                  fontSize="14"
-                  fill="#6b7280"
-                >
-                  {g}
-                </text>
-              </g>
-            ))}
-            {models.map((m, i) => (
-              <text
-                key={m.key}
-                x={xForModel(i)}
-                y={CHART.h - CHART.bottom + 24}
-                textAnchor="middle"
-                fontSize="14"
-                fill="#6b7280"
-              >
-                {m.name}
-              </text>
-            ))}
-            <polyline
-              points={models
-                .map(
-                  (m, i) =>
-                    `${xForModel(i)},${yForPpl(perplexity.values[m.key])}`,
-                )
-                .join(" ")}
-              fill="none"
-              stroke="#9ca3af"
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-            />
-            {models.map((m, i) => (
-              <g key={m.key}>
-                <circle
-                  cx={xForModel(i)}
-                  cy={yForPpl(perplexity.values[m.key])}
-                  r="5"
-                  fill={m.hex}
-                />
-                <text
-                  x={xForModel(i)}
-                  y={yForPpl(perplexity.values[m.key]) - 12}
-                  textAnchor="middle"
-                  fontSize="14"
-                  fill="#374151"
-                >
-                  {fmt(perplexity.values[m.key], "")}
-                </text>
-              </g>
-            ))}
-          </svg>
         </section>
 
         <section className="bg-white/60 backdrop-blur-sm rounded-3xl border border-gray-200 p-8">
